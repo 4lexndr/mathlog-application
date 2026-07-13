@@ -36,6 +36,15 @@ function App() {
   const [recognitionClue, setRecognitionClue] = useState('')
   const [pressureLevel, setPressureLevel] = useState('medium')
 
+  const [attempts, setAttempts] = useState<Attempt[]>([])
+  const [problems, setProblems] = useState<Problem[]>([])
+
+  // load saved problems and attempts on mount
+  useEffect(() => {
+    setProblems(JSON.parse(localStorage.getItem("problems") ?? "[]"))
+    setAttempts(JSON.parse(localStorage.getItem("attempts") ?? "[]"))
+  }, [])
+
   // handle paste
   useEffect(() => {
     async function handlePaste(event: ClipboardEvent) {
@@ -103,151 +112,169 @@ function App() {
 
     localStorage.setItem("problems", JSON.stringify(problems))
     localStorage.setItem("attempts", JSON.stringify(attempts))
+    setProblems(problems)
+    setAttempts(attempts)
   }
 
   return (
     <>
-      <h1>Welcome to mathlog!</h1>
-      <h2>Log your problem below: </h2>
-      <div className="vert">
-        <h3>Problem</h3>
-        <div className="field">
-          <label className="field-label">Source</label>
-          <input
-            type='text'
-            placeholder="Source..."
-            value={source}
-            onChange={(event) => setSource(event.target.value)}
-            className="input-small"
-          />
-        </div>
-        <div className="field">
-          <label className="field-label">URL</label>
-          <input
-            type='url'
-            placeholder="URL..."
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            className="input-small"
-          />
-        </div>
-        <div className="field">
-          <label className="field-label">Subject</label>
-          <select
-            value={subject}
-            onChange={(event) => setSubject(event.target.value)}
-            className="input-small"
-          >
-            {subjectOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label className="field-label">Rating: {rating}</label>
-          <input
-            type="range"
-            min="1200"
-            max="2100"
-            step="50"
-            value={rating}
-            onChange={(event) => setRating(Number(event.target.value))}
-            id="rating-slider"
-          />
-        </div>
-        <div className="field">
-          <label className="field-label">Screenshot</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="input-small"
-          />
-          {screenshot && (
-            <div className="screenshot-preview">
-              <img src={screenshot} alt="Problem screenshot" />
-              <button type="button" onClick={() => setScreenshot('')}>
-                Remove
-              </button>
-            </div>
-          )}
-        </div>
-
-        <h3>Attempt</h3>
-        <div className="field">
-          <label className="field-label">Time spent: {Math.floor(timeSpent / 60)}h {timeSpent % 60}m</label>
-          <input
-            type="range"
-            min="0"
-            max="90"
-            step="5"
-            value={timeSpent}
-            onChange={(event) => setTimeSpent(Number(event.target.value))}
-            id="rating-slider"
-          />
-        </div>
-        <div className="field">
-          <label className="field-label">Result</label>
-          <select
-            value={result}
-            onChange={(event) => setResult(event.target.value)}
-            className="input-small"
-          >
-            {resultOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        {result !== 'independent' && ( <div className="field">
-            <label className="field-label">Mistake type</label>
+      <div id="root-wrapper">
+        <div className="vert-wrapper">
+          <h1>Welcome to mathlog!</h1>
+          <h2>Log your problem below: </h2>
+          <h3>Problem</h3>
+          <div className="field">
+            <label className="field-label">Source</label>
+            <input
+              type='text'
+              placeholder="Source..."
+              value={source}
+              onChange={(event) => setSource(event.target.value)}
+              className="input-small"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label">URL</label>
+            <input
+              type='url'
+              placeholder="URL..."
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              className="input-small"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label">Subject</label>
             <select
-              value={mistakeType}
-              onChange={(event) => setMistakeType(event.target.value)}
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
               className="input-small"
             >
-              {mistakeTypeOptions.map((option) => (
+              {subjectOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
-        )}
-        <div className="field">
-          <label className="field-label">Key idea</label>
-          <input
-            type='text'
-            placeholder="Key idea..."
-            value={keyIdea}
-            onChange={(event) => setKeyIdea(event.target.value)}
-            className="input-small"
-          />
-        </div>
-        <div className="field">
-          <label className="field-label">Pressure level</label>
-          <select
-            value={pressureLevel}
-            onChange={(event) => setPressureLevel(event.target.value)}
-            className="input-small"
-          >
-            {pressureLevelOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="field">
+            <label className="field-label">Rating: {rating}</label>
+            <input
+              type="range"
+              min="1200"
+              max="2100"
+              step="50"
+              value={rating}
+              onChange={(event) => setRating(Number(event.target.value))}
+              id="rating-slider"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label">Screenshot</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="input-small"
+            />
+            {screenshot && (
+              <div className="screenshot-preview">
+                <img src={screenshot} alt="Problem screenshot" />
+                <button type="button" onClick={() => setScreenshot('')}>
+                  Remove
+                </button>
+              </div>
+            )}
+          </div>
 
-        <button
-          onClick={saveLog}
-          id="save-button"
-        >
-          Save Problem
-        </button>
+          <h3>Attempt</h3>
+          <div className="field">
+            <label className="field-label">Time spent: {Math.floor(timeSpent / 60)}h {timeSpent % 60}m</label>
+            <input
+              type="range"
+              min="0"
+              max="90"
+              step="5"
+              value={timeSpent}
+              onChange={(event) => setTimeSpent(Number(event.target.value))}
+              id="rating-slider"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label">Result</label>
+            <select
+              value={result}
+              onChange={(event) => setResult(event.target.value)}
+              className="input-small"
+            >
+              {resultOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {result !== 'independent' && ( <div className="field">
+              <label className="field-label">Mistake type</label>
+              <select
+                value={mistakeType}
+                onChange={(event) => setMistakeType(event.target.value)}
+                className="input-small"
+              >
+                {mistakeTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="field">
+            <label className="field-label">Key idea</label>
+            <input
+              type='text'
+              placeholder="Key idea..."
+              value={keyIdea}
+              onChange={(event) => setKeyIdea(event.target.value)}
+              className="input-small"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label">Pressure level</label>
+            <select
+              value={pressureLevel}
+              onChange={(event) => setPressureLevel(event.target.value)}
+              className="input-small"
+            >
+              {pressureLevelOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={saveLog}
+            id="save-button"
+          >
+            Save Problem
+          </button>
+
+      </div>
+        <div className="vert-wrapper">
+          <h1>Recent attempts</h1>
+          {attempts.map((attempt) => (
+            <div className="attempt-box" key={attempt.id}>
+              <b>{problems.find((p) => p.id === attempt.problem_id)?.source}</b>
+              <span>{attempt.date}</span>
+              <span>
+                {resultOptions.find((o) => o.value === attempt.result)?.label ?? attempt.result}
+              </span>
+              <span>{attempt.is_review ? 'Review' : 'First attempt'}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   )
