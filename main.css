@@ -1,0 +1,41 @@
+.vert {
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+}
+.input-small {
+  width: 30vw;
+  height: 3vh;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+#save-button {
+  width: 25vw;
+  height: 3vh;
+  border: 1px solid black;
+  border-radius: 5px;
+}
+#rating-slider {
+  width: 25vw;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25vh;
+}
+.field-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.screenshot-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5vh;
+  align-items: flex-start;
+}
+.screenshot-preview img {
+  max-width: 30vw;
+  max-height: 30vh;
+  border: 1px solid black;
+  border-radius: 5px;
+}
