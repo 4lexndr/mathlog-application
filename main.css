@@ -15,7 +15,7 @@
   border: 1px solid black;
   border-radius: 5px;
 }
-#rating-slider {
+.slider {
   width: 25vw;
 }
 .field {
@@ -26,18 +26,6 @@
 .field-label {
   font-weight: 600;
   font-size: 0.95rem;
-}
-.screenshot-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5vh;
-  align-items: flex-start;
-}
-.screenshot-preview img {
-  max-width: 30vw;
-  max-height: 30vh;
-  border: 1px solid black;
-  border-radius: 5px;
 }
 .attempt-box {
   display: flex;
@@ -50,6 +38,5 @@
   display: flex;
   flex-direction: row;
   gap: 20vh;
-  border: 1px solid black;
-  padding: 0px 15px
+  padding: 0px 15px;
 }
