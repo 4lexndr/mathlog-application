@@ -1,16 +1,48 @@
-.vert-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1vh;
+body {
+  margin: 0;
+  background-color: #fcf6e6;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-.input-small {
-  width: 30vw;
+#save-button {
+  width: 25vw;
   height: 3vh;
   border: 1px solid black;
   border-radius: 5px;
 }
-#save-button {
-  width: 25vw;
+#header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  width: 100%;
+  height: 8vh;
+  border-bottom: 1.5px solid #222422;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0px 30px;
+}
+#branding {
+  font-size: 25px;
+  letter-spacing: 0.08em;
+}
+#create-new-log {
+  display: flex;
+  margin-left: auto;
+  border-radius: 6px;
+  border: 1px solid black;
+  width: 14vh;
+  height: 3.5vh;
+  background-color: white;
+  align-items: center;
+  justify-content: center;
+}
+.vert {
+  display: flex;
+  flex-direction: column;
+}
+.input-small {
+  width: 30vw;
   height: 3vh;
   border: 1px solid black;
   border-radius: 5px;
@@ -21,7 +53,6 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.25vh;
 }
 .field-label {
   font-weight: 600;
@@ -33,10 +64,4 @@
   border: 1px solid orange;
   width: 15wh;
   height: auto;
-}
-#root-wrapper {
-  display: flex;
-  flex-direction: row;
-  gap: 20vh;
-  padding: 0px 15px;
 }

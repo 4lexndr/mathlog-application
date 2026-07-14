@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { nanoid } from 'nanoid'
 import type { Problem, Attempt } from "./types.ts"
 import {
-  subjectOptions,
+subjectOptions,
   resultOptions,
   mistakeTypeOptions,
   pressureLevelOptions,
@@ -114,8 +114,9 @@ function App() {
         p.problemNumber === problemNumber
     )
 
+    // either append a new problem to existing problems or keep it how it is
     const problemId = existing?.id ?? `prb-${nanoid(10)}`
-    const nextProblems = existing
+    const updatedProblems = existing
       ? problems
       : [
           ...problems,
@@ -135,12 +136,12 @@ function App() {
       recognitionClue: '',
       pressureLevel,
     }
-    const nextAttempts = [...attempts, attempt]
+    const updatedAttempts = [...attempts, attempt]
 
-    localStorage.setItem("problems", JSON.stringify(nextProblems))
-    localStorage.setItem("attempts", JSON.stringify(nextAttempts))
-    setProblems(nextProblems)
-    setAttempts(nextAttempts)
+    localStorage.setItem("problems", JSON.stringify(updatedProblems))
+    localStorage.setItem("attempts", JSON.stringify(updatedAttempts))
+    setProblems(updatedProblems)
+    setAttempts(updatedAttempts)
   }
 
   const timeLabel = `Time spent: ${Math.floor(Number(timeSpent) / 60)}h ${Number(timeSpent) % 60}m`
@@ -151,52 +152,38 @@ function App() {
   }
 
   return (
-    <div id="root-wrapper">
-      <div className="vert-wrapper">
-        <h1>Welcome to mathlog!</h1>
-        <h2>Log your problem below: </h2>
-
-        <h3>Problem</h3>
-        <TextField label="Year" value={year} onChange={setYear} />
-        <TextField label="Contest" value={contest} onChange={setContest} />
-        <TextField label="Subcontest" value={subcontest} onChange={setSubcontest} />
-        <TextField label="Problem number" value={problemNumber} onChange={setProblemNumber} />
-        <TextField label="URL" value={url} onChange={setUrl} type="url" />
-        <SelectField label="Subject" value={subject} onChange={setSubject} options={subjectOptions} />
-        <SliderField
-          label={`Rating: ${rating}`}
-          value={rating}
-          onChange={(v) => setRating(Number(v))}
-          min={1200}
-          max={2100}
-          step={50}
-        />
-
-        <h3>Attempt</h3>
-        <SliderField label={timeLabel} value={timeSpent} onChange={setTimeSpent} min={0} max={90} step={5} />
-        <SelectField label="Result" value={result} onChange={setResult} options={resultOptions} />
-        {result !== 'independent' && (
-          <SelectField label="Mistake type" value={mistakeType} onChange={setMistakeType} options={mistakeTypeOptions} />
-        )}
-        <TextField label="Key idea" value={keyIdea} onChange={setKeyIdea} />
-        <SelectField label="Pressure level" value={pressureLevel} onChange={setPressureLevel} options={pressureLevelOptions} />
-
-        <button onClick={saveLog} id="save-button">
-          Save Problem
-        </button>
+    <div className="vert">
+      <div id="header">
+        <span id="branding">mathlog</span>
+        <button id="create-new-log">Create new log</button>
       </div>
+      <TextField label="Year" value={year} onChange={setYear} />
+      <TextField label="Contest" value={contest} onChange={setContest} />
+      <TextField label="Subcontest" value={subcontest} onChange={setSubcontest} />
+      <TextField label="Problem number" value={problemNumber} onChange={setProblemNumber} />
+      <TextField label="URL" value={url} onChange={setUrl} type="url" />
+      <SelectField label="Subject" value={subject} onChange={setSubject} options={subjectOptions} />
+      <SliderField
+        label={`Rating: ${rating}`}
+        value={rating}
+        onChange={(v) => setRating(Number(v))}
+        min={1200}
+        max={2100}
+        step={50}
+      />
 
-      <div className="vert-wrapper">
-        <h1>Recent attempts</h1>
-        {attempts.map((attempt) => (
-          <div className="attempt-box" key={attempt.id}>
-            <b>{problemTitle(attempt.problemId)}</b>
-            <span>{attempt.date}</span>
-            <span>{resultOptions.find((o) => o.value === attempt.result)?.label ?? attempt.result}</span>
-            <span>{attempt.isReview ? 'Review' : 'First attempt'}</span>
-          </div>
-        ))}
-      </div>
+      <h3>Attempt</h3>
+      <SliderField label={timeLabel} value={timeSpent} onChange={setTimeSpent} min={5} max={90} step={5} />
+      <SelectField label="Result" value={result} onChange={setResult} options={resultOptions} />
+      {result !== 'independent' && (
+        <SelectField label="Mistake type" value={mistakeType} onChange={setMistakeType} options={mistakeTypeOptions} />
+      )}
+      <TextField label="Key idea" value={keyIdea} onChange={setKeyIdea} />
+      <SelectField label="Pressure level" value={pressureLevel} onChange={setPressureLevel} options={pressureLevelOptions} />
+
+      <button onClick={saveLog} id="save-button">
+        Save Problem
+      </button>
     </div>
   )
 }
