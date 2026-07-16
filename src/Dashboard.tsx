@@ -12,6 +12,22 @@ interface DashboardProps {
   attempts: Attempt[]
 }
 
+const dashboardGreetings = [
+  "Welcome back, Alexander",
+  "Ready for another problem?",
+  "What will you solve today?",
+  "Let’s sharpen the toolkit",
+  "Keep the momentum going",
+  "Time to make progress",
+  "Let’s find the key idea",
+  "Another day, another insight",
+  "Ready for the next challenge?",
+]
+
+const dashboardGreeting = dashboardGreetings[
+  Math.floor(Math.random() * dashboardGreetings.length)
+]
+
 function Dashboard({ problems, attempts }: DashboardProps) {
   const today = new Date()
   const todayKey = localDateKey(today)
@@ -66,7 +82,7 @@ function Dashboard({ problems, attempts }: DashboardProps) {
 
   return (
     <>
-      <h1 id="page-title">Welcome back, Alexander</h1>
+      <h1 id="page-title">{dashboardGreeting}</h1>
 
       <div id="main-panel">
         <section className="dashboard-card" aria-labelledby="performance-heading">

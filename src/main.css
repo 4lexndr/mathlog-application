@@ -47,7 +47,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 10px 28px;
 }
 
 .header-navigation {
@@ -63,7 +63,7 @@ button {
   justify-content: center;
   padding: 0;
   color: #59411a;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   text-decoration: none;
   transition: color 160ms ease;
