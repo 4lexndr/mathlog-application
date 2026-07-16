@@ -32,7 +32,6 @@ function Dashboard({ problems, attempts }: DashboardProps) {
   const today = new Date()
   const todayKey = localDateKey(today)
   const performance = getSevenDayPerformance(attempts, today)
-  const problemById = new Map(problems.map((problem) => [problem.id, problem]))
   const dueProblems = problems.filter((problem) => problem.reviewDate <= todayKey)
   const dueProblemIds = new Set(dueProblems.map((problem) => problem.id))
   const estimatedReviewMinutes = attempts
@@ -57,20 +56,17 @@ function Dashboard({ problems, attempts }: DashboardProps) {
     mistakeCounts.set(attempt.mistakeType, (mistakeCounts.get(attempt.mistakeType) ?? 0) + 1)
   }
 
-  const topMistake = [...mistakeCounts.entries()]
+  const topMistakes = [...mistakeCounts.entries()]
     .map(([value, count]) => ({
       count,
       label: labelForOption(mistakeTypeOptions, value),
     }))
-    .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label))[0]
+    .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label))
+    .slice(0, 3)
   const countsBySubject = new Map(subjectOptions.map((option) => [option.value, 0]))
   let otherSubjectCount = 0
 
-  // Count attempts so the chart reflects practice volume.
-  for (const attempt of attempts) {
-    const problem = problemById.get(attempt.problemId)
-    if (!problem) continue
-
+  for (const problem of problems) {
     const currentCount = countsBySubject.get(problem.subject)
     if (currentCount === undefined) {
       otherSubjectCount += 1
@@ -87,15 +83,15 @@ function Dashboard({ problems, attempts }: DashboardProps) {
     subjectDistribution.push({ label: "Other", value: otherSubjectCount })
   }
 
-  const categorizedAttempts = subjectDistribution.reduce((total, subject) => total + subject.value, 0)
-  const largestSubjectCount = Math.max(0, ...subjectDistribution.map((subject) => subject.value))
+  const categorizedProblems = subjectDistribution.reduce((total, subject) => total + subject.value, 0)
 
   return (
     <>
       <h1 id="page-title">{dashboardGreeting}</h1>
 
       <div id="main-panel">
-        <section className="dashboard-card" aria-labelledby="performance-heading">
+        <div className="dashboard-row dashboard-top-row">
+          <section className="dashboard-card" aria-labelledby="performance-heading">
           <div className="section-heading-row">
             <div>
               <p className="section-kicker">Last 7 days</p>
@@ -132,9 +128,9 @@ function Dashboard({ problems, attempts }: DashboardProps) {
           {performance.total === 0 && (
             <p className="performance-note">Complete a problem to start this week&apos;s snapshot.</p>
           )}
-        </section>
+          </section>
 
-        <section className="dashboard-card upcoming-card" aria-labelledby="upcoming-heading">
+          <section className="dashboard-card upcoming-card" aria-labelledby="upcoming-heading">
           <div className="section-heading-row">
             <div>
               <p className="section-kicker">Review queue</p>
@@ -177,21 +173,27 @@ function Dashboard({ problems, attempts }: DashboardProps) {
           {dueProblems.length === 0 && (
             <p className="performance-note">No problems are ready for review today.</p>
           )}
-        </section>
+          </section>
+        </div>
 
-        <section className="dashboard-card insight-card" aria-labelledby="mistakes-heading">
+        <div className="dashboard-row dashboard-bottom-row">
+          <section className="dashboard-card insight-card" aria-labelledby="mistakes-heading">
           <div>
             <p className="section-kicker">Last 7 days</p>
             <h2 id="mistakes-heading" className="section-header">What keeps going wrong?</h2>
           </div>
 
-          {topMistake ? (
-            <div className="insight-answer">
-              <strong>{topMistake.label}</strong>
-              <p>
-                Your most frequent recorded mistake, appearing {topMistake.count}{" "}
-                {topMistake.count === 1 ? "time" : "times"}.
-              </p>
+          {topMistakes.length > 0 ? (
+            <div className="mistake-ranking" role="list" aria-label="Most frequent mistakes">
+              {topMistakes.map((mistake, index) => (
+                <div className="mistake-contender" key={mistake.label} role="listitem">
+                  <span>#{index + 1}</span>
+                  <strong>{mistake.label}</strong>
+                  <p>
+                    {mistake.count} {mistake.count === 1 ? "occurrence" : "occurrences"}
+                  </p>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="insight-answer insight-empty">
@@ -199,51 +201,56 @@ function Dashboard({ problems, attempts }: DashboardProps) {
               <p>Record mistake types in your attempts to reveal a pattern.</p>
             </div>
           )}
-        </section>
+          </section>
 
-        <section className="dashboard-card subject-distribution-card" aria-labelledby="subjects-heading">
+          <section className="dashboard-card subject-distribution-card" aria-labelledby="subjects-heading">
           <div className="section-heading-row">
             <div>
-              <p className="section-kicker">All attempts</p>
+              <p className="section-kicker">All problems</p>
               <h2 id="subjects-heading" className="section-header">Subject distribution</h2>
             </div>
             <span
               className="count-badge"
-              aria-label={`${categorizedAttempts} categorized ${categorizedAttempts === 1 ? "attempt" : "attempts"}`}
+              aria-label={`${categorizedProblems} categorized ${categorizedProblems === 1 ? "problem" : "problems"}`}
             >
-              {categorizedAttempts}
+              {categorizedProblems}
             </span>
           </div>
 
-          <div className="subject-chart" role="list" aria-label="Attempts by subject">
+          <div className="subject-chart" role="list" aria-label="Problems by subject">
             {subjectDistribution.map((subject) => {
-              const width = largestSubjectCount === 0
+              const percentage = categorizedProblems === 0
                 ? 0
-                : (subject.value / largestSubjectCount) * 100
+                : (subject.value / categorizedProblems) * 100
+              const barColor = `hsl(38 65% ${78 - percentage * 0.35}%)`
 
               return (
                 <div
                   key={subject.label}
                   className="subject-bar-row"
                   role="listitem"
-                  aria-label={`${subject.label}: ${subject.value} ${subject.value === 1 ? "attempt" : "attempts"}`}
+                  aria-label={`${subject.label}: ${subject.value} ${subject.value === 1 ? "problem" : "problems"}`}
                 >
                   <div className="subject-bar-heading" aria-hidden="true">
                     <span>{subject.label}</span>
                     <strong>{subject.value}</strong>
                   </div>
                   <div className="subject-bar-track" aria-hidden="true">
-                    <span className="subject-bar-fill" style={{ width: `${width}%` }} />
+                    <span
+                      className="subject-bar-fill"
+                      style={{ width: `${percentage}%`, background: barColor }}
+                    />
                   </div>
                 </div>
               )
             })}
           </div>
 
-          {categorizedAttempts === 0 && (
-            <p className="performance-note">Log an attempt to start building your subject profile.</p>
+          {categorizedProblems === 0 && (
+            <p className="performance-note">Log a problem to start building your subject profile.</p>
           )}
-        </section>
+          </section>
+        </div>
       </div>
     </>
   )
