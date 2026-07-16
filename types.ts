@@ -1,3 +1,4 @@
+// A problem holds stable source metadata shared by its attempts.
 export interface Problem {
   id: string,
   year: string,
@@ -5,24 +6,26 @@ export interface Problem {
   subcontest: string,
   problemNumber: string,
   url: string,
-  rating: string,
+  rating: number,
   subject: string,
+  screenshot?: string,
 }
 
+// An attempt records one practice session and its next review interval.
 export interface Attempt {
   id: string,
   problemId: string,
   date: string,
-  isReview: boolean,
   result: string,
-  timeSpent: string,
-  assistanceLevel: string,
+  timeSpent: number,
   mistakeType: string,
   keyIdea: string,
   recognitionClue: string,
-  pressureLevel: string,
+  contestStatus: string,
+  reviewAfterDays: number | null,
 }
 
+// Shared option lists keep stored values and visible labels consistent.
 export const subjectOptions = [
   { value: 'algebra', label: 'Algebra' },
   { value: 'combinatorics', label: 'Combinatorics' },
@@ -39,20 +42,21 @@ export const resultOptions = [
 ]
 
 export const mistakeTypeOptions = [
-  { value: 'unsure-how-to-begin', label: 'Unsure how to begin' },
-  { value: 'couldnt-finish', label: "Right method but couldn't finish" },
-  { value: 'logic-counting-error', label: 'Counting error' },
-  { value: 'algebra-arithmetic-error', label: 'Algebraic error' },
-  { value: 'edge-case-omitted', label: 'Edge case omitted' },
-  { value: 'misread-condition', label: 'Misread condition or problem' },
-  { value: 'time-pressure', label: 'Time pressure forced a mistake' },
-  { value: 'gave-up-too-early', label: 'Gave up too early' },
-  { value: 'bad-approach-too-long', label: 'Stayed with a bad approach too long' },
-  { value: 'other', label: 'Other' },
+  { value: 'concept-gap', label: 'Concept gap', description: 'Did not know the necessary idea' },
+  { value: 'recognition-gap', label: 'Recognition gap', description: 'Knew the tool, but did not recognize that it applied' },
+  { value: 'modeling-gap', label: 'Modeling gap', description: 'Represented the problem incorrectly' },
+  { value: 'execution-error', label: 'Execution error', description: 'Correct strategy, incorrect implementation' },
+  { value: 'overcounting-undercounting', label: 'Overcounting/undercounting', description: '' },
+  { value: 'edge-case-omission', label: 'Edge-case omission', description: '' },
+  { value: 'misread', label: 'Misread', description: '' },
+  { value: 'premature-abandonment', label: 'Premature abandonment', description: 'Abandoned a productive approach' },
+  { value: 'unproductive-fixation', label: 'Unproductive fixation', description: 'Stayed too long with a bad approach' },
+  { value: 'pressure-rushing', label: 'Pressure/rushing', description: '' },
+  { value: 'careless-arithmetic-algebra', label: 'Careless arithmetic/algebra', description: '' },
+  { value: 'other', label: 'Other', description: '' },
 ]
 
-export const pressureLevelOptions = [
-  { value: 'low', label: 'Low pressure' },
-  { value: 'medium', label: 'Medium pressure' },
-  { value: 'high', label: 'High pressure' },
+export const contestStatusOptions = [
+  { value: 'rated', label: 'Rated' },
+  { value: 'unrated', label: 'Unrated' },
 ]
