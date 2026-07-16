@@ -636,6 +636,43 @@ button {
   line-height: 1.5;
 }
 
+.review-log-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.review-context-card,
+.review-log-card {
+  min-height: 0;
+}
+
+.review-context-card h2 {
+  margin: 0;
+  color: #31291d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 23px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.review-context-grid {
+  margin-top: 25px;
+}
+
+.review-log-fields {
+  margin-top: 27px;
+}
+
+.review-log-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-top: 28px;
+}
+
 .wide-field {
   grid-column: 1 / -1;
 }
@@ -895,7 +932,8 @@ textarea.input-card {
 
   #main-panel,
   .log-layout,
-  .detail-layout {
+  .detail-layout,
+  .review-log-layout {
     grid-template-columns: 1fr;
   }
 

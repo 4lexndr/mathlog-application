@@ -108,7 +108,14 @@ function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
           </article>
 
           <div className="review-action">
-            <button className="button-style" type="button" disabled={!reviewIsDue}>
+            <button
+              className="button-style"
+              type="button"
+              disabled={!reviewIsDue}
+              onClick={() => {
+                window.location.hash = `review-log-${problem.id}`
+              }}
+            >
               Log a review
             </button>
             {!reviewIsDue && (

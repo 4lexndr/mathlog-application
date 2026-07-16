@@ -3,6 +3,7 @@ import AttemptDetail from "./AttemptDetail"
 import Dashboard from "./Dashboard"
 import History from "./History"
 import Journal from "./Journal"
+import ReviewLog from "./ReviewLog"
 import Settings from "./Settings"
 import HeaderBar from "./Header"
 import type { Problem, Attempt } from "./types.ts"
@@ -30,6 +31,7 @@ type Route =
   | { "page": "journal" }
   | { "page": "settings" }
   | { "page": "log" }
+  | { "page": "review-log"; problemId: string }
   | { "page": "attempt"; attemptId: string }
 
 type SliderInputProps = {
@@ -93,6 +95,13 @@ function getRoute(): Route {
 
   if (hash === "log") {
     return { page: "log" }
+  }
+
+  if (hash.startsWith("review-log-")) {
+    return {
+      page: "review-log",
+      problemId: decodeURIComponent(hash.slice("review-log-".length)),
+    }
   }
 
   return {
@@ -173,6 +182,11 @@ function App() {
     setRating(nextSettings.defaultRating)
     setSubject(nextSettings.defaultSubject)
     setContestStatus(nextSettings.defaultContestStatus)
+  }
+
+  function saveReviewAttempt(attempt: Attempt) {
+    setAttempts((previous) => [...previous, attempt])
+    window.location.hash = "dashboard"
   }
 
   // Images are validated before being stored as local data URLs.
@@ -528,6 +542,14 @@ function App() {
           attemptId={route.attemptId}
           problems={problems}
           attempts={attempts}
+        />
+      ) : route.page === "review-log" ? (
+        <ReviewLog
+          key={route.problemId}
+          problemId={route.problemId}
+          problems={problems}
+          attempts={attempts}
+          onSave={saveReviewAttempt}
         />
       ) : route.page === "history" ? (
         <History problems={problems} attempts={attempts} />
