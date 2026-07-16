@@ -6,6 +6,6 @@ const reviewDelayByResult: Record<string, number> = {
   "full-solution": 2,
 }
 
-export function getReviewDelayDays(result: string): number | null {
-  return reviewDelayByResult[result] ?? null
+export function getReviewDelayDays(result: string): number {
+  return reviewDelayByResult[result]
 }

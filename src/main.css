@@ -611,6 +611,31 @@ button {
   margin: 0;
 }
 
+.review-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 15px;
+}
+
+.review-action .button-style:disabled {
+  opacity: 0.55;
+  filter: grayscale(25%);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.review-action .button-style:disabled:hover {
+  background: #fad698;
+  transform: none;
+}
+
+.review-hint {
+  color: #837969;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .wide-field {
   grid-column: 1 / -1;
 }

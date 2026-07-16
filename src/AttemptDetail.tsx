@@ -21,6 +21,15 @@ function optionLabel(
   return value ? labelForOption(options, value) : fallback
 }
 
+function daysUntil(reviewDate: string): number {
+  const [year, month, day] = reviewDate.split("-").map(Number)
+  const today = new Date()
+  const reviewDay = Date.UTC(year, month - 1, day)
+  const currentDay = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+
+  return Math.round((reviewDay - currentDay) / (24 * 60 * 60 * 1000))
+}
+
 function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
   const attempt = attempts.find((item) => item.id === attemptId)
   const problem = attempt
@@ -47,52 +56,69 @@ function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
     )
   }
 
+  const daysUntilReview = daysUntil(problem.reviewDate)
+  const reviewIsDue = daysUntilReview <= 0
+
   return (
     <>
       <h1 id="page-title">{formatProblemTitle(problem)}</h1>
 
       <div className="detail-layout">
-        <article className="dashboard-card">
-          <section className="detail-section" aria-labelledby="attempt-details-heading">
-            <h2 id="attempt-details-heading">Attempt details</h2>
-            <dl className="detail-grid">
-              <div className="detail-item">
-                <dt>Date</dt>
-                <dd>{formatDate(attempt.date, { dateStyle: "long" })}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Result</dt>
-                <dd>{optionLabel(resultOptions, attempt.result)}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Time spent</dt>
-                <dd>{formatDuration(attempt.timeSpent)}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Mistake type</dt>
-                <dd>{optionLabel(mistakeTypeOptions, attempt.mistakeType, "None recorded")}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Contest status</dt>
-                <dd>{optionLabel(contestStatusOptions, attempt.contestStatus)}</dd>
-              </div>
-            </dl>
-          </section>
+        <div>
+          <article className="dashboard-card">
+            <section className="detail-section" aria-labelledby="attempt-details-heading">
+              <h2 id="attempt-details-heading">Attempt details</h2>
+              <dl className="detail-grid">
+                <div className="detail-item">
+                  <dt>Date</dt>
+                  <dd>{formatDate(attempt.date, { dateStyle: "long" })}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>Result</dt>
+                  <dd>{optionLabel(resultOptions, attempt.result)}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>Time spent</dt>
+                  <dd>{formatDuration(attempt.timeSpent)}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>Mistake type</dt>
+                  <dd>{optionLabel(mistakeTypeOptions, attempt.mistakeType, "None recorded")}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>Contest status</dt>
+                  <dd>{optionLabel(contestStatusOptions, attempt.contestStatus)}</dd>
+                </div>
+              </dl>
+            </section>
 
-          <section className="detail-section" aria-labelledby="reflection-heading">
-            <h2 id="reflection-heading">Learning</h2>
-            <dl className="detail-grid">
-              <div className="detail-item wide-field">
-                <dt>What I learned</dt>
-                <dd>{attempt.keyIdea || "Not recorded"}</dd>
-              </div>
-              <div className="detail-item wide-field">
-                <dt>Recognition clue</dt>
-                <dd>{attempt.recognitionClue || "Not recorded"}</dd>
-              </div>
-            </dl>
-          </section>
-        </article>
+            <section className="detail-section" aria-labelledby="reflection-heading">
+              <h2 id="reflection-heading">Learning</h2>
+              <dl className="detail-grid">
+                <div className="detail-item wide-field">
+                  <dt>What I learned</dt>
+                  <dd>{attempt.keyIdea || "Not recorded"}</dd>
+                </div>
+                <div className="detail-item wide-field">
+                  <dt>Recognition clue</dt>
+                  <dd>{attempt.recognitionClue || "Not recorded"}</dd>
+                </div>
+              </dl>
+            </section>
+          </article>
+
+          <div className="review-action">
+            <button className="button-style" type="button" disabled={!reviewIsDue}>
+              Log a review
+            </button>
+            {!reviewIsDue && (
+              <span className="review-hint">
+                This problem will open for review in {daysUntilReview}{" "}
+                {daysUntilReview === 1 ? "day" : "days"}.
+              </span>
+            )}
+          </div>
+        </div>
 
         <aside className="dashboard-card">
           <section className="detail-section" aria-labelledby="problem-details-heading">

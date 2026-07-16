@@ -250,9 +250,7 @@ function App() {
       rating,
       subject,
       screenshot: screenshot || undefined,
-      reviewDate: reviewDelayDays === null
-        ? null
-        : addCalendarDays(attemptDate, reviewDelayDays),
+      reviewDate: addCalendarDays(attemptDate, reviewDelayDays),
     }
 
     const newAttempt: Attempt = {
