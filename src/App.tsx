@@ -5,6 +5,7 @@ import History from "./History"
 import Journal from "./Journal"
 import Settings from "./Settings"
 import WeeklyReview from "./WeeklyReview"
+import HeaderBar from "./Header"
 import type { Problem, Attempt } from "./types.ts"
 import {
   contestStatusOptions,
@@ -340,45 +341,9 @@ function App() {
     window.location.hash = "dashboard"
   }
 
-  const navigationValue = route.page === "attempt" || route.page === "log"
-    ? ""
-    : route.page
-
   return (
     <main id="app">
-      <header id="header-bar">
-        <a id="brand-name" href="#dashboard">mathlog</a>
-        <div className="header-actions">
-          <label className="header-navigation">
-            <span className="visually-hidden">Navigate to page</span>
-            <select
-              className="header-page-select"
-              aria-label="Navigate to page"
-              value={navigationValue}
-              onChange={(event) => {
-                window.location.hash = event.target.value
-              }}
-            >
-              <option value="" disabled>Navigate</option>
-              <option value="dashboard">Dashboard</option>
-              <option value="weekly-review">Weekly review</option>
-              <option value="journal">Journal</option>
-              <option value="history">History</option>
-              <option value="settings">Settings</option>
-            </select>
-          </label>
-          <button id="new-log-button" type="button"
-            onClick={() => {
-              resetLogForm()
-              window.location.hash = "log"
-            }}
-          >
-            <span aria-hidden="true">＋</span>
-            New log
-          </button>
-        </div>
-      </header>
-
+      <HeaderBar resetLogForm={resetLogForm}/>
       {route.page === "log" ? (
         <>
           <h1 id="page-title">{reviewProblemId ? "Log a review" : "Create a new log"}</h1>
