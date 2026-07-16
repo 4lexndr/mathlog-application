@@ -179,6 +179,10 @@ button {
   margin-top: 18px;
 }
 
+.slider-input + .input-field {
+  margin-top: 28px;
+}
+
 .slider-input-header {
   display: flex;
   align-items: baseline;

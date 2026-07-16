@@ -33,6 +33,7 @@ type Route =
 type SliderInputProps = {
   label: string
   value: number
+  valueLabel?: string
   min: number
   max: number
   step?: number
@@ -40,13 +41,16 @@ type SliderInputProps = {
 }
 
 const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024
+const DEFAULT_TIME_SPENT = 15
 
-function SliderInput({ label, value, min, max, step = 1, onChange }: SliderInputProps) {
+function SliderInput({ label, value, valueLabel, min, max, step = 1, onChange }: SliderInputProps) {
+  const displayedValue = valueLabel ?? String(value)
+
   return (
     <div className="slider-input">
       <div className="slider-input-header">
         <span className="input-description">{label}</span>
-        <span className="slider-value">{value}</span>
+        <span className="slider-value">{displayedValue}</span>
       </div>
       <input
         className="slider-track"
@@ -56,6 +60,7 @@ function SliderInput({ label, value, min, max, step = 1, onChange }: SliderInput
         step={step}
         value={value}
         aria-label={label}
+        aria-valuetext={displayedValue}
         onChange={(event) => {
           onChange(Number(event.target.value))
         }}
@@ -130,6 +135,7 @@ function App() {
 
   // New-log attempt fields.
   const [result, setResult] = useState("")
+  const [timeSpent, setTimeSpent] = useState(DEFAULT_TIME_SPENT)
   const [mistakeType, setMistakeType] = useState("")
   const [learning, setLearning] = useState("")
   const [recognitionClue, setRecognitionClue] = useState("")
@@ -198,6 +204,7 @@ function App() {
     setSubject(settings.defaultSubject)
     setScreenshot("")
     setResult("")
+    setTimeSpent(DEFAULT_TIME_SPENT)
     setMistakeType("")
     setLearning("")
     setRecognitionClue("")
@@ -245,7 +252,7 @@ function App() {
       problemId: savedProblem.id,
       date: new Date().toISOString(),
       result,
-      timeSpent: 0,
+      timeSpent,
       mistakeType: result === "independent" ? "" : mistakeType,
       keyIdea: learning.trim(),
       recognitionClue: recognitionClue.trim(),
@@ -293,7 +300,7 @@ function App() {
                   </label>
 
                   <label className="input-field">
-                    <span className="input-description">subcontest</span>
+                    <span className="input-description">subcontest (optional)</span>
                     <input
                       className="input-card"
                       placeholder="A"
@@ -381,6 +388,15 @@ function App() {
                       ))}
                     </select>
                   </label>
+
+                  <SliderInput
+                    label="time spent"
+                    value={timeSpent}
+                    valueLabel={`${timeSpent} min`}
+                    min={1}
+                    max={30}
+                    onChange={setTimeSpent}
+                  />
 
                   {result !== "" && result !== "independent" && (
                     <label className="input-field">
