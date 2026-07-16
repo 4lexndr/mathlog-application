@@ -2,7 +2,7 @@ function Footer() {
   return (
     <footer id="app-footer">
       <span>© {new Date().getFullYear()} mathlog</span>
-      <span>Built for deliberate practice.</span>
+      <span>Built for success.</span>
     </footer>
   )
 }
