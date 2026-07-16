@@ -43,6 +43,7 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
       id: crypto.randomUUID(),
       problemId: savedProblemId,
       date: new Date().toISOString(),
+      isReview: true,
       result,
       timeSpent,
       mistakeType: "",

@@ -17,6 +17,7 @@ export interface Attempt {
   id: string,
   problemId: string,
   date: string,
+  isReview: boolean,
   result: string,
   timeSpent: number,
   mistakeType: string,

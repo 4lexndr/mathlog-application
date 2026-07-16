@@ -271,6 +271,7 @@ function App() {
       id: crypto.randomUUID(),
       problemId: savedProblem.id,
       date: attemptDate.toISOString(),
+      isReview: false,
       result,
       timeSpent,
       mistakeType: savedMistakeType,
