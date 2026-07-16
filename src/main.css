@@ -51,27 +51,32 @@ button {
 }
 
 .header-navigation {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
-.header-page-select {
+.header-page-link {
+  display: flex;
   min-height: 42px;
-  padding: 0 36px 0 13px;
-  border: 1px solid #dcc38f;
-  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   color: #59411a;
-  background: #fff9eb;
-  font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  cursor: pointer;
+  text-decoration: none;
+  transition: color 160ms ease;
 }
 
-.header-page-select:hover {
-  background: #fff2d8;
+.header-page-link:hover {
+  color: #9b6e24;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
-.header-page-select:focus-visible {
+.header-page-link:focus-visible {
+  border-radius: 4px;
   outline: var(--focus-ring);
   outline-offset: 3px;
 }
@@ -955,15 +960,16 @@ textarea.input-card {
 
   .header-actions {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .header-navigation {
-    min-width: 0;
-    flex: 1;
+    order: 2;
+    width: 100%;
   }
 
-  .header-page-select {
-    width: 100%;
+  .header-page-link {
+    flex: 1;
   }
 
   .detail-grid,
