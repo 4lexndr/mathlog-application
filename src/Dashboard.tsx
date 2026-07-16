@@ -70,7 +70,7 @@ function Dashboard({ problems, attempts }: DashboardProps) {
 
   return (
     <>
-      <h1 id="page-title">Today&apos;s Problems</h1>
+      <h1 id="page-title">Welcome back, Alexander</h1>
 
       <div id="main-panel">
         <section className="dashboard-card" aria-labelledby="due-heading">
