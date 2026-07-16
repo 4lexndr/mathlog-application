@@ -9,6 +9,7 @@ export interface Problem {
   rating: number,
   subject: string,
   screenshot?: string,
+  reviewDate: string | null,
 }
 
 // An attempt records one practice session.

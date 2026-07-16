@@ -14,12 +14,14 @@ import {
 } from "./types.ts"
 import {
   type AppSettings,
+  addCalendarDays,
   loadAttempts,
   loadProblems,
   loadSettings,
   saveData,
   saveSettings,
 } from "./storage.ts"
+import { getReviewDelayDays } from "./reviewSchedule.ts"
 import "./main.css"
 
 type Route =
@@ -235,6 +237,9 @@ function App() {
       return
     }
 
+    const attemptDate = new Date()
+    const savedMistakeType = result === "independent" ? "" : mistakeType
+    const reviewDelayDays = getReviewDelayDays(result)
     const savedProblem: Problem = {
       id: crypto.randomUUID(),
       year: year.trim(),
@@ -245,15 +250,18 @@ function App() {
       rating,
       subject,
       screenshot: screenshot || undefined,
+      reviewDate: reviewDelayDays === null
+        ? null
+        : addCalendarDays(attemptDate, reviewDelayDays),
     }
 
     const newAttempt: Attempt = {
       id: crypto.randomUUID(),
       problemId: savedProblem.id,
-      date: new Date().toISOString(),
+      date: attemptDate.toISOString(),
       result,
       timeSpent,
-      mistakeType: result === "independent" ? "" : mistakeType,
+      mistakeType: savedMistakeType,
       keyIdea: learning.trim(),
       recognitionClue: recognitionClue.trim(),
       contestStatus,
