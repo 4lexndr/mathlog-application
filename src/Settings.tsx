@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { contestStatusOptions, subjectOptions } from "./types.ts"
 import type { AppSettings } from "./storage.ts"
-import { DEFAULT_APP_SETTINGS, parseReviewDays } from "./storage.ts"
+import { DEFAULT_APP_SETTINGS } from "./storage.ts"
 
 interface SettingsProps {
   settings: AppSettings
@@ -12,13 +12,6 @@ function Settings({ settings, onSave }: SettingsProps) {
   const [defaultSubject, setDefaultSubject] = useState(settings.defaultSubject)
   const [defaultRating, setDefaultRating] = useState(settings.defaultRating)
   const [defaultContestStatus, setDefaultContestStatus] = useState(settings.defaultContestStatus)
-  const [adaptiveReviewScheduling, setAdaptiveReviewScheduling] = useState(
-    settings.adaptiveReviewScheduling,
-  )
-  const [defaultReviewDays, setDefaultReviewDays] = useState(
-    settings.defaultReviewDays === null ? "" : String(settings.defaultReviewDays),
-  )
-  const [error, setError] = useState("")
   const [saved, setSaved] = useState(false)
 
   function restoreDefaults() {
@@ -26,28 +19,15 @@ function Settings({ settings, onSave }: SettingsProps) {
     setDefaultSubject(DEFAULT_APP_SETTINGS.defaultSubject)
     setDefaultRating(DEFAULT_APP_SETTINGS.defaultRating)
     setDefaultContestStatus(DEFAULT_APP_SETTINGS.defaultContestStatus)
-    setAdaptiveReviewScheduling(DEFAULT_APP_SETTINGS.adaptiveReviewScheduling)
-    setDefaultReviewDays("")
-    setError("")
     setSaved(false)
   }
 
   function save() {
-    const parsedReviewDays = parseReviewDays(defaultReviewDays)
-    if (parsedReviewDays === undefined) {
-      setError("Default review timing must be a whole number of days.")
-      setSaved(false)
-      return
-    }
-
     onSave({
       defaultSubject,
       defaultRating,
       defaultContestStatus,
-      adaptiveReviewScheduling,
-      defaultReviewDays: parsedReviewDays,
     })
-    setError("")
     setSaved(true)
   }
 
@@ -117,48 +97,6 @@ function Settings({ settings, onSave }: SettingsProps) {
           </div>
         </div>
 
-        <div className="form-section">
-          <p className="section-kicker">Review scheduling</p>
-          <div className="settings-grid">
-            <label className="input-field">
-              <span className="input-description">scheduling mode</span>
-              <select
-                className="input-card"
-                value={adaptiveReviewScheduling ? "adaptive" : "fixed"}
-                onChange={(event) => {
-                  setAdaptiveReviewScheduling(event.target.value === "adaptive")
-                  setSaved(false)
-                }}
-              >
-                <option value="adaptive">Adaptive to result and mistake</option>
-                <option value="fixed">Use only the default interval</option>
-              </select>
-            </label>
-
-            <label className="input-field">
-              <span className="input-description">default review interval (days)</span>
-              <input
-                className="input-card"
-                type="number"
-                min="0"
-                step="1"
-                inputMode="numeric"
-                placeholder="No default"
-                value={defaultReviewDays}
-                onChange={(event) => {
-                  setDefaultReviewDays(event.target.value)
-                  setSaved(false)
-                }}
-              />
-            </label>
-          </div>
-          <p className="settings-help">
-            The default interval is used when adaptive scheduling has no recommendation, or for
-            every new log when adaptive scheduling is off.
-          </p>
-        </div>
-
-        {error && <p className="form-error" role="alert">{error}</p>}
         {saved && <p className="settings-saved" role="status">Settings saved.</p>}
 
         <div className="form-actions">

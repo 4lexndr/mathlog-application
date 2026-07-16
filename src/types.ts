@@ -11,7 +11,7 @@ export interface Problem {
   screenshot?: string,
 }
 
-// An attempt records one practice session and its next review interval.
+// An attempt records one practice session.
 export interface Attempt {
   id: string,
   problemId: string,
@@ -22,7 +22,6 @@ export interface Attempt {
   keyIdea: string,
   recognitionClue: string,
   contestStatus: string,
-  reviewAfterDays: number | null,
 }
 
 // Shared option lists keep stored values and visible labels consistent.

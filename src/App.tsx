@@ -4,7 +4,6 @@ import Dashboard from "./Dashboard"
 import History from "./History"
 import Journal from "./Journal"
 import Settings from "./Settings"
-import WeeklyReview from "./WeeklyReview"
 import HeaderBar from "./Header"
 import type { Problem, Attempt } from "./types.ts"
 import {
@@ -15,11 +14,9 @@ import {
 } from "./types.ts"
 import {
   type AppSettings,
-  getReviewRecommendation,
   loadAttempts,
   loadProblems,
   loadSettings,
-  parseReviewDays,
   saveData,
   saveSettings,
 } from "./storage.ts"
@@ -30,8 +27,7 @@ type Route =
   | { "page": "history" }
   | { "page": "journal" }
   | { "page": "settings" }
-  | { "page": "weekly-review" }
-  | { "page": "log"; problemId?: string }
+  | { "page": "log" }
   | { "page": "attempt"; attemptId: string }
 
 type SliderInputProps = {
@@ -88,17 +84,8 @@ function getRoute(): Route {
     return { page: "settings" }
   }
 
-  if (hash === "weekly-review") {
-    return { page: "weekly-review" }
-  }
-
   if (hash === "log") {
     return { page: "log" }
-  }
-
-  if (hash.startsWith("log/")) {
-    const problemId = decodeURIComponent(hash.slice("log/".length))
-    return problemId ? { page: "log", problemId } : { page: "dashboard" }
   }
 
   return {
@@ -147,8 +134,6 @@ function App() {
   const [learning, setLearning] = useState("")
   const [recognitionClue, setRecognitionClue] = useState("")
   const [contestStatus, setContestStatus] = useState(settings.defaultContestStatus)
-  const [reviewAfterDays, setReviewAfterDays] = useState("")
-  const [reviewDaysManuallyEdited, setReviewDaysManuallyEdited] = useState(false)
 
   // Form feedback is kept separate so image failures do not block other fields.
   const [error, setError] = useState("")
@@ -157,10 +142,6 @@ function App() {
   // Lazy initializers read local storage only during the first render.
   const [problems, setProblems] = useState<Problem[]>(loadProblems)
   const [attempts, setAttempts] = useState<Attempt[]>(loadAttempts)
-  const reviewProblemId = route.page === "log" ? route.problemId : undefined
-  const reviewProblem = reviewProblemId
-    ? problems.find((problem) => problem.id === reviewProblemId)
-    : undefined
 
   // Keep React state synchronized with navigation links and browser history.
   useEffect(() => {
@@ -178,60 +159,12 @@ function App() {
     saveData(problems, attempts)
   }, [problems, attempts])
 
-  // Review routes reuse the problem metadata and start with fresh attempt fields.
-  useEffect(() => {
-    if (!reviewProblemId) return
-
-    const problem = problems.find((item) => item.id === reviewProblemId)
-    if (!problem) {
-      setError("This problem could not be found.")
-      return
-    }
-
-    const previousAttempt = attempts.findLast((attempt) => attempt.problemId === problem.id)
-    setYear(problem.year)
-    setContest(problem.contest)
-    setSubcontest(problem.subcontest)
-    setProblemNumber(problem.problemNumber)
-    setUrl(problem.url)
-    setRating(problem.rating)
-    setSubject(problem.subject)
-    setScreenshot(problem.screenshot ?? "")
-    setResult("")
-    setMistakeType("")
-    setLearning("")
-    setRecognitionClue("")
-    setContestStatus(previousAttempt?.contestStatus ?? settings.defaultContestStatus)
-    setReviewAfterDays(
-      settings.defaultReviewDays === null ? "" : String(settings.defaultReviewDays),
-    )
-    setReviewDaysManuallyEdited(false)
-    setError("")
-    setScreenshotError("")
-  }, [attempts, problems, reviewProblemId, settings.defaultContestStatus, settings.defaultReviewDays])
-
-  const reviewRecommendation = settings.adaptiveReviewScheduling
-    ? getReviewRecommendation(result, mistakeType)
-    : null
-  const automaticReviewDays = reviewRecommendation?.recommendedDays
-    ?? settings.defaultReviewDays
-
-  // Follow the recommendation until the user explicitly overrides the interval.
-  useEffect(() => {
-    if (reviewDaysManuallyEdited) return
-
-    setReviewAfterDays(
-      automaticReviewDays === null ? "" : String(automaticReviewDays),
-    )
-  }, [automaticReviewDays, reviewDaysManuallyEdited])
-
   function handleSaveSettings(nextSettings: AppSettings) {
     saveSettings(nextSettings)
     setSettings(nextSettings)
     setRating(nextSettings.defaultRating)
     setSubject(nextSettings.defaultSubject)
     setContestStatus(nextSettings.defaultContestStatus)
-    setReviewDaysManuallyEdited(false)
   }
 
   // Images are validated before being stored as local data URLs.
@@ -269,19 +202,12 @@ function App() {
     setLearning("")
     setRecognitionClue("")
     setContestStatus(settings.defaultContestStatus)
-    setReviewAfterDays("")
-    setReviewDaysManuallyEdited(false)
     setError("")
     setScreenshotError("")
   }
 
   function saveLog() {
     // Validate required fields before creating either side of the data relationship.
-    if (reviewProblemId && !reviewProblem) {
-      setError("This problem could not be found.")
-      return
-    }
-
     if (!year.trim() || !contest.trim() || !problemNumber.trim() || !subject) {
       setError("Please fill in the year, contest, problem number, and subject.")
       return
@@ -302,14 +228,8 @@ function App() {
       return
     }
 
-    const parsedReviewDays = parseReviewDays(reviewAfterDays)
-    if (parsedReviewDays === undefined) {
-      setError("Review timing must be a whole number of days.")
-      return
-    }
-
     const savedProblem: Problem = {
-      id: reviewProblem?.id ?? crypto.randomUUID(),
+      id: crypto.randomUUID(),
       year: year.trim(),
       contest: contest.trim(),
       subcontest: subcontest.trim(),
@@ -330,12 +250,9 @@ function App() {
       keyIdea: learning.trim(),
       recognitionClue: recognitionClue.trim(),
       contestStatus,
-      reviewAfterDays: parsedReviewDays,
     }
 
-    setProblems((previous) => reviewProblem
-      ? previous.map((problem) => problem.id === savedProblem.id ? savedProblem : problem)
-      : [...previous, savedProblem])
+    setProblems((previous) => [...previous, savedProblem])
     setAttempts((previous) => [...previous, newAttempt])
     resetLogForm()
     window.location.hash = "dashboard"
@@ -346,7 +263,7 @@ function App() {
       <HeaderBar resetLogForm={resetLogForm}/>
       {route.page === "log" ? (
         <>
-          <h1 id="page-title">{reviewProblemId ? "Log a review" : "Create a new log"}</h1>
+          <h1 id="page-title">Create a new log</h1>
           <div className="log-layout">
             <div>
               <section className="dashboard-card">
@@ -527,41 +444,13 @@ function App() {
                     />
                   </label>
 
-                  <label className="input-field">
-                    <span className="input-description">review in (days)</span>
-                    <input
-                      className="input-card"
-                      type="number"
-                      min="0"
-                      step="1"
-                      inputMode="numeric"
-                      placeholder="Leave blank for no review"
-                      value={reviewAfterDays}
-                      onChange={(event) => {
-                        setReviewAfterDays(event.target.value)
-                        setReviewDaysManuallyEdited(true)
-                      }}
-                    />
-                    {reviewRecommendation && (
-                      <small className="review-recommendation">
-                        Suggested range: {reviewRecommendation.minDays}–{reviewRecommendation.maxDays}{" "}
-                        days for {reviewRecommendation.reason}. You can override the suggested{" "}
-                        {reviewRecommendation.recommendedDays}-day interval.
-                      </small>
-                    )}
-                    {!reviewRecommendation && settings.defaultReviewDays !== null && (
-                      <small className="review-recommendation">
-                        Using your default {settings.defaultReviewDays}-day review interval.
-                      </small>
-                    )}
-                  </label>
                 </div>
               </section>
               <div className="log-form-footer">
                 <button className="button-style create-log-button" type="button"
                   onClick={saveLog}
                 >
-                  {reviewProblemId ? "Log review" : "Create log"}
+                  Create log
                 </button>
                 {error !== "" && <span className="log-form-error" role="alert">{error}</span>}
               </div>
@@ -624,8 +513,6 @@ function App() {
         <Journal problems={problems} attempts={attempts} />
       ) : route.page === "settings" ? (
         <Settings settings={settings} onSave={handleSaveSettings} />
-      ) : route.page === "weekly-review" ? (
-        <WeeklyReview attempts={attempts} />
       ) : (
         <Dashboard problems={problems} attempts={attempts} />
       )}

@@ -1,6 +1,6 @@
 # Mathlog
 
-A device-local journal for deliberate math practice. Mathlog separates stable problem identity from the details of each attempt, so reviews stay connected even when the perceived difficulty or outcome changes.
+A device-local journal for deliberate math practice. Mathlog keeps problem details connected to each recorded attempt.
 
 ## Data model
 

@@ -5,17 +5,7 @@ import {
   resultOptions,
   subjectOptions,
 } from "./types.ts"
-import {
-  describeDueDate,
-  formatDate,
-  formatDuration,
-  formatProblemTitle,
-  getAttemptDueDate,
-  getLatestAttemptByProblem,
-  getReviewAttemptIds,
-  labelForOption,
-  localDateKey,
-} from "./storage.ts"
+import { formatDate, formatDuration, formatProblemTitle, labelForOption } from "./storage.ts"
 
 interface AttemptDetailProps {
   attemptId: string
@@ -57,16 +47,6 @@ function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
     )
   }
 
-  const today = new Date()
-  const todayKey = localDateKey(today)
-  const dueDate = getAttemptDueDate(attempt)
-  const latestAttempt = getLatestAttemptByProblem(attempts).get(problem.id)
-  const isReview = getReviewAttemptIds(attempts).has(attempt.id)
-
-  // Only the newest attempt controls the next review shown for a problem.
-  const isLatestAttempt = latestAttempt?.id === attempt.id
-  const isOverdue = isLatestAttempt && dueDate !== null && dueDate < todayKey
-
   return (
     <>
       <h1 id="page-title">{formatProblemTitle(problem)}</h1>
@@ -79,10 +59,6 @@ function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
               <div className="detail-item">
                 <dt>Date</dt>
                 <dd>{formatDate(attempt.date, { dateStyle: "long" })}</dd>
-              </div>
-              <div className="detail-item">
-                <dt>Attempt type</dt>
-                <dd>{isReview ? "Review attempt" : "Initial attempt"}</dd>
               </div>
               <div className="detail-item">
                 <dt>Result</dt>
@@ -119,21 +95,6 @@ function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
         </article>
 
         <aside className="dashboard-card">
-          <section className="detail-section" aria-labelledby="review-heading">
-            <h2 id="review-heading">Review schedule</h2>
-            {isLatestAttempt ? (
-              <div className={`due-banner${isOverdue ? " overdue" : ""}`}>
-                <strong>{describeDueDate(dueDate, today)}</strong>
-                {dueDate && <p>Scheduled for {formatDate(dueDate, { dateStyle: "long" })}</p>}
-              </div>
-            ) : (
-              <div className="due-banner superseded">
-                <strong>Schedule superseded</strong>
-                <p>A newer attempt now controls this problem&apos;s review date.</p>
-              </div>
-            )}
-          </section>
-
           <section className="detail-section" aria-labelledby="problem-details-heading">
             <h2 id="problem-details-heading">Problem</h2>
             <dl className="detail-grid">

@@ -520,47 +520,6 @@ button {
   transition: width 220ms ease;
 }
 
-/* Weekly review and journal pages. */
-
-.weekly-review-card {
-  min-height: 0;
-}
-
-.weekly-review-stats {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 28px;
-}
-
-.weekly-review-stat {
-  display: flex;
-  min-height: 150px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  padding: 20px 14px;
-  border: 1px solid #eadfc8;
-  border-radius: 12px;
-  background: #fffefa;
-  text-align: center;
-}
-
-.weekly-review-value {
-  color: #71501a;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 42px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.weekly-review-stat strong {
-  color: #554939;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .journal-list {
   padding: 0;
   margin: 25px 0 0;
@@ -656,14 +615,6 @@ textarea.input-card {
   min-height: 96px;
   resize: vertical;
   line-height: 1.5;
-}
-
-.review-recommendation {
-  display: block;
-  margin-top: 7px;
-  color: #837969;
-  font-size: 11px;
-  line-height: 1.45;
 }
 
 .settings-card {
@@ -851,22 +802,6 @@ textarea.input-card {
   line-height: 1;
 }
 
-.due-status {
-  flex: 0 0 auto;
-  padding: 4px 8px;
-  border-radius: 999px;
-  color: #75531b;
-  background: #fff0d1;
-  font-size: 10px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.due-status.overdue {
-  color: #913e2d;
-  background: #fbe4dc;
-}
-
 .detail-section h2 {
   margin: 0 0 16px;
   color: #31291d;
@@ -899,35 +834,6 @@ textarea.input-card {
 .detail-item a {
   color: #815d20;
   font-weight: 700;
-}
-
-.due-banner strong {
-  color: #4d3b1f;
-  font-size: 14px;
-}
-
-.due-banner p {
-  margin: 6px 0 0;
-  color: #756a59;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.due-banner {
-  padding: 16px;
-  border: 1px solid #e3ca96;
-  border-radius: 12px;
-  background: #fff3db;
-}
-
-.due-banner.overdue {
-  border-color: #e0ae9f;
-  background: #fdf0ea;
-}
-
-.due-banner.superseded {
-  border-color: #ded5c5;
-  background: #f7f3eb;
 }
 
 .not-found-card {
@@ -964,9 +870,6 @@ textarea.input-card {
     grid-template-columns: 1fr;
   }
 
-  .weekly-review-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 600px) {
@@ -1038,7 +941,4 @@ textarea.input-card {
     gap: 10px;
   }
 
-  .weekly-review-stats {
-    grid-template-columns: 1fr;
-  }
 }

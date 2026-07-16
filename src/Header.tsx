@@ -17,7 +17,6 @@ function HeaderBar({ resetLogForm }: HeaderBarProps) {
             >
               <option value="" disabled>Navigate</option>
               <option value="dashboard">Dashboard</option>
-              <option value="weekly-review">Weekly review</option>
               <option value="journal">Journal</option>
               <option value="history">History</option>
               <option value="settings">Settings</option>

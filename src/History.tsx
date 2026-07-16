@@ -3,7 +3,6 @@ import { resultOptions } from "./types.ts"
 import {
   formatDate,
   formatProblemTitle,
-  getReviewAttemptIds,
   labelForOption,
 } from "./storage.ts"
 
@@ -16,7 +15,6 @@ const HISTORY_LIMIT = 50
 
 function History({ problems, attempts }: HistoryProps) {
   const problemById = new Map(problems.map((problem) => [problem.id, problem]))
-  const reviewAttemptIds = getReviewAttemptIds(attempts)
 
   // Bound the rendered list while keeping the newest attempts visible.
   const visibleAttempts = [...attempts]
@@ -71,7 +69,6 @@ function History({ problems, attempts }: HistoryProps) {
                     <div className="problem-meta">
                       <span>{formatDate(attempt.date, { dateStyle: "medium" })}</span>
                       <span>{result}</span>
-                      <span>{reviewAttemptIds.has(attempt.id) ? "Review" : "Initial attempt"}</span>
                     </div>
                   </div>
                   <span className="history-arrow" aria-hidden="true">›</span>

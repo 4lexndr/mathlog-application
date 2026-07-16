@@ -2,9 +2,6 @@ import type { Attempt, Problem } from "./types.ts"
 import { mistakeTypeOptions, subjectOptions } from "./types.ts"
 import {
   addCalendarDays,
-  describeDueDate,
-  formatProblemTitle,
-  getDueProblems,
   getSevenDayPerformance,
   labelForOption,
   localDateKey,
@@ -18,7 +15,6 @@ interface DashboardProps {
 function Dashboard({ problems, attempts }: DashboardProps) {
   const today = new Date()
   const todayKey = localDateKey(today)
-  const dueProblems = getDueProblems(problems, attempts, today)
   const performance = getSevenDayPerformance(attempts, today)
   const problemById = new Map(problems.map((problem) => [problem.id, problem]))
 
@@ -44,7 +40,7 @@ function Dashboard({ problems, attempts }: DashboardProps) {
   const countsBySubject = new Map(subjectOptions.map((option) => [option.value, 0]))
   let otherSubjectCount = 0
 
-  // Count attempts so the chart reflects practice volume, including reviews.
+  // Count attempts so the chart reflects practice volume.
   for (const attempt of attempts) {
     const problem = problemById.get(attempt.problemId)
     if (!problem) continue
@@ -73,53 +69,6 @@ function Dashboard({ problems, attempts }: DashboardProps) {
       <h1 id="page-title">Welcome back, Alexander</h1>
 
       <div id="main-panel">
-        <section className="dashboard-card" aria-labelledby="due-heading">
-          <div className="section-heading-row">
-            <h2 id="due-heading" className="section-header">Problems due today</h2>
-            <span
-              className="count-badge"
-              aria-label={`${dueProblems.length} ${dueProblems.length === 1 ? "problem" : "problems"} due`}
-            >
-              {dueProblems.length}
-            </span>
-          </div>
-
-          {dueProblems.length === 0 ? (
-            <div className="empty-state">
-              <h3>You&apos;re all caught up</h3>
-              <p>Previously attempted problems will appear here when they&apos;re ready to revisit.</p>
-            </div>
-          ) : (
-            <div className="problem-list">
-              {dueProblems.map(({ problem, attempt, dueDate }) => {
-                const isOverdue = dueDate < todayKey
-
-                return (
-                  <button
-                    key={attempt.id}
-                    className="problem-card problem-card-button"
-                    type="button"
-                    onClick={() => {
-                      window.location.hash = `log/${encodeURIComponent(problem.id)}`
-                    }}
-                  >
-                    <div className="problem-card-copy">
-                      <h3>{formatProblemTitle(problem)}</h3>
-                      <div className="problem-meta">
-                        <span>{labelForOption(subjectOptions, problem.subject)}</span>
-                        <span>{problem.rating} rating</span>
-                      </div>
-                    </div>
-                    <span className={`due-status${isOverdue ? " overdue" : ""}`}>
-                      {describeDueDate(dueDate, today)}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </section>
-
         <section className="dashboard-card" aria-labelledby="performance-heading">
           <div className="section-heading-row">
             <div>
