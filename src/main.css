@@ -31,9 +31,29 @@ button {
 /* App shell and primary navigation. */
 
 #app {
+  display: flex;
   width: min(1120px, calc(100% - 48px));
+  min-height: 100vh;
+  flex-direction: column;
   margin: 0 auto;
   padding: 38px 0 64px;
+}
+
+.page-content {
+  flex: 1;
+}
+
+#app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 2px 0;
+  border-top: 1px solid #e5d3ae;
+  margin-top: 64px;
+  color: #8a8174;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 #header-bar {

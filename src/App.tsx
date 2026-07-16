@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import AttemptDetail from "./AttemptDetail"
 import Dashboard from "./Dashboard"
+import Footer from "./Footer"
 import History from "./History"
 import Journal from "./Journal"
 import ReviewLog from "./ReviewLog"
@@ -289,7 +290,8 @@ function App() {
   return (
     <main id="app">
       <HeaderBar resetLogForm={resetLogForm}/>
-      {route.page === "log" ? (
+      <div className="page-content">
+        {route.page === "log" ? (
         <>
           <h1 id="page-title">Create a new log</h1>
           <div className="log-layout">
@@ -560,7 +562,9 @@ function App() {
         <Settings settings={settings} onSave={handleSaveSettings} />
       ) : (
         <Dashboard problems={problems} attempts={attempts} />
-      )}
+        )}
+      </div>
+      <Footer />
     </main>
   )
 }
