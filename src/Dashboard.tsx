@@ -33,6 +33,16 @@ function Dashboard({ problems, attempts }: DashboardProps) {
   const todayKey = localDateKey(today)
   const performance = getSevenDayPerformance(attempts, today)
   const problemById = new Map(problems.map((problem) => [problem.id, problem]))
+  const dueProblems = problems.filter((problem) => problem.reviewDate <= todayKey)
+  const dueProblemIds = new Set(dueProblems.map((problem) => problem.id))
+  const estimatedReviewMinutes = attempts
+    .filter((attempt) => !attempt.isReview && dueProblemIds.has(attempt.problemId))
+    .reduce((total, attempt) => total + attempt.timeSpent, 0)
+  const averageDueRating = dueProblems.length === 0
+    ? null
+    : Math.round(
+      dueProblems.reduce((total, problem) => total + problem.rating, 0) / dueProblems.length,
+    )
 
   // Dashboard insights use a rolling window that includes today.
   const sevenDayStart = addCalendarDays(today, -6)
@@ -121,6 +131,51 @@ function Dashboard({ problems, attempts }: DashboardProps) {
 
           {performance.total === 0 && (
             <p className="performance-note">Complete a problem to start this week&apos;s snapshot.</p>
+          )}
+        </section>
+
+        <section className="dashboard-card upcoming-card" aria-labelledby="upcoming-heading">
+          <div className="section-heading-row">
+            <div>
+              <p className="section-kicker">Review queue</p>
+              <h2 id="upcoming-heading" className="section-header">Upcoming problems</h2>
+            </div>
+            <span
+              className="count-badge"
+              aria-label={`${dueProblems.length} ${dueProblems.length === 1 ? "problem" : "problems"} due today`}
+            >
+              {dueProblems.length}
+            </span>
+          </div>
+
+          <div className="weekly-summary">
+            <span className="weekly-total">{dueProblems.length}</span>
+            <div>
+              <strong>{dueProblems.length === 1 ? "problem" : "problems"} due today</strong>
+              <p>including anything overdue</p>
+            </div>
+          </div>
+
+          <div className="stat-list">
+            <div className="stat-row">
+              <div className="stat-label">
+                <strong>Average rating</strong>
+                <span>Across today&apos;s review queue</span>
+              </div>
+              <span className="stat-value">{averageDueRating ?? "—"}</span>
+            </div>
+
+            <div className="stat-row">
+              <div className="stat-label">
+                <strong>Estimated time</strong>
+                <span>Based on initial attempts</span>
+              </div>
+              <span className="stat-value">{estimatedReviewMinutes} min</span>
+            </div>
+          </div>
+
+          {dueProblems.length === 0 && (
+            <p className="performance-note">No problems are ready for review today.</p>
           )}
         </section>
 
