@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react"
 import type { Attempt, Problem } from "./types.ts"
 import { resultOptions } from "./types.ts"
 import {
@@ -21,6 +22,10 @@ interface HistoryCardProps {
 }
 
 const HISTORY_LIMIT = 50
+
+function normalizeSearchValue(value: string): string {
+  return value.trim().toLocaleLowerCase()
+}
 
 function HistoryCard({
   headingId,
@@ -83,36 +88,96 @@ function HistoryCard({
 }
 
 function History({ problems, attempts }: HistoryProps) {
-  const problemById = new Map(problems.map((problem) => [problem.id, problem]))
-  const newestFirst = [...attempts].sort((first, second) => {
+  const [searchQuery, setSearchQuery] = useState("")
+  const { problemById, searchTextByProblemId } = useMemo(() => {
+    const nextProblemById = new Map<string, Problem>()
+    const nextSearchTextByProblemId = new Map<string, string>()
+
+    for (const problem of problems) {
+      nextProblemById.set(problem.id, problem)
+      nextSearchTextByProblemId.set(problem.id, normalizeSearchValue([
+        problem.year,
+        problem.contest,
+        problem.subcontest,
+        problem.problemNumber,
+      ].join(" ")))
+    }
+
+    return {
+      problemById: nextProblemById,
+      searchTextByProblemId: nextSearchTextByProblemId,
+    }
+  }, [problems])
+  const newestFirst = useMemo(() => [...attempts].sort((first, second) => {
     const dateOrder = second.date.localeCompare(first.date)
     return dateOrder || second.id.localeCompare(first.id)
-  })
-  const initialAttempts = newestFirst
-    .filter((attempt) => !attempt.isReview)
-    .slice(0, HISTORY_LIMIT)
-  const reviewAttempts = newestFirst
-    .filter((attempt) => attempt.isReview)
-    .slice(0, HISTORY_LIMIT)
+  }), [attempts])
+  const searchTerms = useMemo(() => {
+    const normalizedQuery = normalizeSearchValue(searchQuery)
+    return normalizedQuery ? normalizedQuery.split(/\s+/) : []
+  }, [searchQuery])
+  const { initialAttempts, reviewAttempts } = useMemo(() => {
+    const nextInitialAttempts: Attempt[] = []
+    const nextReviewAttempts: Attempt[] = []
+
+    for (const attempt of newestFirst) {
+      const searchText = searchTextByProblemId.get(attempt.problemId) ?? ""
+      if (searchTerms.some((term) => !searchText.includes(term))) continue
+
+      const targetAttempts = attempt.isReview ? nextReviewAttempts : nextInitialAttempts
+      if (targetAttempts.length < HISTORY_LIMIT) targetAttempts.push(attempt)
+
+      if (
+        nextInitialAttempts.length === HISTORY_LIMIT
+        && nextReviewAttempts.length === HISTORY_LIMIT
+      ) break
+    }
+
+    return {
+      initialAttempts: nextInitialAttempts,
+      reviewAttempts: nextReviewAttempts,
+    }
+  }, [newestFirst, searchTerms, searchTextByProblemId])
+  const isSearching = searchTerms.length > 0
 
   return (
     <>
       <h1 id="page-title">Attempt history</h1>
 
+      <search className="history-search" aria-label="Search attempt history">
+        <label htmlFor="history-search-input" className="input-description">
+          Search attempts
+        </label>
+        <input
+          id="history-search-input"
+          className="input-card"
+          type="search"
+          placeholder="Year, contest, subcontest, or problem number"
+          value={searchQuery}
+          onChange={(event) => {
+            setSearchQuery(event.target.value)
+          }}
+        />
+      </search>
+
       <div className="history-layout">
         <HistoryCard
           headingId="history-heading"
           title="Previous attempts"
-          emptyTitle="No attempts yet"
-          emptyDescription="Completed logs will appear here, with the most recent attempt first."
+          emptyTitle={isSearching ? "No matching attempts" : "No attempts yet"}
+          emptyDescription={isSearching
+            ? "Try another year, contest, subcontest, or problem number."
+            : "Completed logs will appear here, with the most recent attempt first."}
           attempts={initialAttempts}
           problemById={problemById}
         />
         <HistoryCard
           headingId="review-history-heading"
           title="Reviews"
-          emptyTitle="No reviews yet"
-          emptyDescription="Completed review logs will appear here."
+          emptyTitle={isSearching ? "No matching reviews" : "No reviews yet"}
+          emptyDescription={isSearching
+            ? "Try another year, contest, subcontest, or problem number."
+            : "Completed review logs will appear here."}
           attempts={reviewAttempts}
           problemById={problemById}
         />

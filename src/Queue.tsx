@@ -49,7 +49,12 @@ function QueueSection({
           <p>No problems in this group.</p>
         </div>
       ) : (
-        <div className="problem-list">
+        <div
+          className="problem-list queue-problem-list"
+          role="region"
+          aria-labelledby={headingId}
+          tabIndex={0}
+        >
           {problems.map((problem) => {
             const attemptId = attemptIdByProblem.get(problem.id)
 
