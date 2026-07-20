@@ -21,7 +21,7 @@ function Journal({ problems, attempts }: JournalProps) {
     <>
       <h1 id="page-title">Learning journal</h1>
 
-      <section className="dashboard-card" aria-labelledby="journal-heading">
+      <section className="dashboard-card journal-card" aria-labelledby="journal-heading">
         <div className="section-heading-row">
           <div>
             <p className="section-kicker">Things to remember</p>
@@ -41,11 +41,7 @@ function Journal({ problems, attempts }: JournalProps) {
             <p>Add a short lesson when logging a problem and it will appear here.</p>
           </div>
         ) : (
-          <ul
-            className="journal-list scroll-list journal-scroll-list"
-            aria-labelledby="journal-heading"
-            tabIndex={0}
-          >
+          <ul className="journal-list">
             {entries.map((attempt) => {
               const problem = problemById.get(attempt.problemId)
 

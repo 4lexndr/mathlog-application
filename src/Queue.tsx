@@ -125,7 +125,7 @@ function Queue({ problems, attempts, onSnoozeAll }: QueueProps) {
           >
             Snooze All
           </button>
-          <span>Moves overdue and due-today problems forward one day.</span>
+          <span>Moves overdue and due-today problems to tomorrow.</span>
         </div>
       </div>
 

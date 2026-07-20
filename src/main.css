@@ -665,13 +665,11 @@ button {
   list-style: none;
 }
 
-.journal-scroll-list {
-  max-height: 384px;
-  padding-right: 10px;
+.journal-card {
+  min-height: 510px;
 }
 
 .journal-entry {
-  min-height: 128px;
   padding: 18px 2px;
   border-bottom: 1px solid #ece1cc;
 }

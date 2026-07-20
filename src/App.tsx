@@ -209,6 +209,18 @@ function App() {
     }))
   }
 
+  function moveProblemsToTomorrow(problemIds: string[]) {
+    const selectedProblemIds = new Set(problemIds)
+    const tomorrow = addCalendarDays(localDateKey(), 1)
+    if (!tomorrow) return
+
+    setProblems((previous) => previous.map((problem) => (
+      selectedProblemIds.has(problem.id)
+        ? { ...problem, reviewDate: tomorrow }
+        : problem
+    )))
+  }
+
   // Images are validated before being stored as local data URLs.
   async function handleScreenshot(file?: File) {
     if (!file) return
@@ -596,7 +608,7 @@ function App() {
       ) : route.page === "journal" ? (
         <Journal problems={problems} attempts={attempts} />
       ) : route.page === "queue" ? (
-        <Queue problems={problems} attempts={attempts} onSnoozeAll={snoozeProblems} />
+        <Queue problems={problems} attempts={attempts} onSnoozeAll={moveProblemsToTomorrow} />
       ) : route.page === "settings" ? (
         <Settings settings={settings} onSave={handleSaveSettings} />
       ) : (
