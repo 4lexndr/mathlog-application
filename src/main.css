@@ -666,12 +666,12 @@ button {
 }
 
 .journal-scroll-list {
-  max-height: 312px;
+  max-height: 384px;
   padding-right: 10px;
 }
 
 .journal-entry {
-  min-height: 104px;
+  min-height: 128px;
   padding: 18px 2px;
   border-bottom: 1px solid #ece1cc;
 }
@@ -1104,11 +1104,11 @@ textarea.input-card {
 }
 
 .history-problem-list {
-  max-height: 289px;
+  max-height: 343px;
 }
 
 .history-problem-list .problem-card {
-  min-height: 86px;
+  min-height: 104px;
 }
 
 .problem-card-button {

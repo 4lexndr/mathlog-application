@@ -98,6 +98,7 @@ function Queue({ problems, attempts, onSnoozeAll }: QueueProps) {
   const overdueProblems = visibleProblems.filter((problem) => problem.reviewDate < today)
   const upcomingProblems = visibleProblems.filter((problem) => problem.reviewDate === today)
   const comingSoonProblems = visibleProblems.filter((problem) => problem.reviewDate > today)
+  const snoozableProblems = [...overdueProblems, ...upcomingProblems]
   const attemptIdByProblem = new Map<string, string>()
 
   for (const attempt of attempts) {
@@ -117,14 +118,14 @@ function Queue({ problems, attempts, onSnoozeAll }: QueueProps) {
           <button
             className="danger-button"
             type="button"
-            disabled={upcomingProblems.length === 0}
+            disabled={snoozableProblems.length === 0}
             onClick={() => {
-              onSnoozeAll(upcomingProblems.map((problem) => problem.id))
+              onSnoozeAll(snoozableProblems.map((problem) => problem.id))
             }}
           >
-            Snooze All Due Today
+            Snooze All
           </button>
-          <span>Moves only today&apos;s problems to tomorrow.</span>
+          <span>Moves overdue and due-today problems forward one day.</span>
         </div>
       </div>
 
