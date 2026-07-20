@@ -122,6 +122,7 @@ function AttemptDetail({ attemptId, problems, attempts, onSnooze }: AttemptDetai
             <button
               className="danger-button"
               type="button"
+              disabled={!reviewIsDue}
               onClick={() => {
                 onSnooze(problem.id)
               }}
