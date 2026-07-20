@@ -626,11 +626,6 @@ button {
   margin-top: 27px;
 }
 
-.subject-scroll-list {
-  max-height: 168px;
-  padding: 3px 10px 5px 3px;
-}
-
 .subject-bar-heading {
   display: flex;
   align-items: baseline;
@@ -671,11 +666,12 @@ button {
 }
 
 .journal-scroll-list {
-  max-height: 270px;
+  max-height: 312px;
   padding-right: 10px;
 }
 
 .journal-entry {
+  min-height: 104px;
   padding: 18px 2px;
   border-bottom: 1px solid #ece1cc;
 }
@@ -867,11 +863,11 @@ button {
 }
 
 .queue-problem-list {
-  max-height: 367px;
+  max-height: 391px;
 }
 
 .queue-section .problem-card {
-  min-height: 112px;
+  min-height: 120px;
   align-items: flex-start;
 }
 
@@ -1108,7 +1104,11 @@ textarea.input-card {
 }
 
 .history-problem-list {
-  max-height: 268px;
+  max-height: 289px;
+}
+
+.history-problem-list .problem-card {
+  min-height: 86px;
 }
 
 .problem-card-button {
