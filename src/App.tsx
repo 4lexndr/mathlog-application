@@ -4,6 +4,7 @@ import Dashboard from "./Dashboard"
 import Footer from "./Footer"
 import History from "./History"
 import Journal from "./Journal"
+import Queue from "./Queue"
 import ReviewLog from "./ReviewLog"
 import Settings from "./Settings"
 import HeaderBar from "./Header"
@@ -32,6 +33,7 @@ type Route =
   | { "page": "history" }
   | { "page": "journal" }
   | { "page": "settings" }
+  | { "page": "queue" }
   | { "page": "log" }
   | { "page": "review-log"; problemId: string }
   | { "page": "attempt"; attemptId: string }
@@ -93,6 +95,10 @@ function getRoute(): Route {
 
   if (hash === "settings") {
     return { page: "settings" }
+  }
+
+  if (hash === "queue") {
+    return { page: "queue" }
   }
 
   if (hash === "log") {
@@ -190,6 +196,17 @@ function App() {
   function saveReviewAttempt(attempt: Attempt) {
     setAttempts((previous) => [...previous, attempt])
     window.location.hash = "dashboard"
+  }
+
+  function snoozeProblems(problemIds: string[]) {
+    const selectedProblemIds = new Set(problemIds)
+
+    setProblems((previous) => previous.map((problem) => {
+      if (!selectedProblemIds.has(problem.id)) return problem
+
+      const nextReviewDate = addCalendarDays(problem.reviewDate, 1)
+      return nextReviewDate ? { ...problem, reviewDate: nextReviewDate } : problem
+    }))
   }
 
   // Images are validated before being stored as local data URLs.
@@ -564,6 +581,7 @@ function App() {
           attemptId={route.attemptId}
           problems={problems}
           attempts={attempts}
+          onSnooze={(problemId) => snoozeProblems([problemId])}
         />
       ) : route.page === "review-log" ? (
         <ReviewLog
@@ -577,6 +595,8 @@ function App() {
         <History problems={problems} attempts={attempts} />
       ) : route.page === "journal" ? (
         <Journal problems={problems} attempts={attempts} />
+      ) : route.page === "queue" ? (
+        <Queue problems={problems} attempts={attempts} onSnoozeAll={snoozeProblems} />
       ) : route.page === "settings" ? (
         <Settings settings={settings} onSave={handleSaveSettings} />
       ) : (

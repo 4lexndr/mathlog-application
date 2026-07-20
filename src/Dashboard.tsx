@@ -173,6 +173,7 @@ function Dashboard({ problems, attempts }: DashboardProps) {
           {dueProblems.length === 0 && (
             <p className="performance-note">No problems are ready for review today.</p>
           )}
+          <a className="see-more-link" href="#queue">See more</a>
           </section>
         </div>
 

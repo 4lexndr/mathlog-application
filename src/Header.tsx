@@ -4,6 +4,7 @@ interface HeaderBarProps {
 
 const navigationItems = [
   { href: "#dashboard", label: "Dashboard" },
+  { href: "#queue", label: "Queue" },
   { href: "#journal", label: "Journal" },
   { href: "#history", label: "History" },
   { href: "#settings", label: "Settings" },

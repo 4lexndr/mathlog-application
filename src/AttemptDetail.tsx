@@ -11,6 +11,7 @@ interface AttemptDetailProps {
   attemptId: string
   problems: Problem[]
   attempts: Attempt[]
+  onSnooze: (problemId: string) => void
 }
 
 function optionLabel(
@@ -30,7 +31,7 @@ function daysUntil(reviewDate: string): number {
   return Math.round((reviewDay - currentDay) / (24 * 60 * 60 * 1000))
 }
 
-function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
+function AttemptDetail({ attemptId, problems, attempts, onSnooze }: AttemptDetailProps) {
   const attempt = attempts.find((item) => item.id === attemptId)
   const problem = attempt
     ? problems.find((item) => item.id === attempt.problemId)
@@ -117,6 +118,15 @@ function AttemptDetail({ attemptId, problems, attempts }: AttemptDetailProps) {
               }}
             >
               Log a review
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              onClick={() => {
+                onSnooze(problem.id)
+              }}
+            >
+              Snooze
             </button>
             {!reviewIsDue && (
               <span className="review-hint">

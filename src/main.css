@@ -484,6 +484,26 @@ button {
   text-align: center;
 }
 
+.see-more-link {
+  display: inline-block;
+  margin-top: 18px;
+  color: #815d20;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.see-more-link:hover {
+  color: #5f4112;
+}
+
+.see-more-link:focus-visible {
+  border-radius: 3px;
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+}
+
 .subject-distribution-card {
   min-height: 0;
 }
@@ -729,6 +749,104 @@ button {
   color: #837969;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.danger-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 17px;
+  border: 1px solid #b94836;
+  border-radius: 10px;
+  color: #fffaf7;
+  background: #c94f3b;
+  box-shadow: 0 2px 0 rgba(102, 38, 27, 0.16);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.danger-button:hover {
+  background: #b94331;
+  transform: translateY(-1px);
+}
+
+.danger-button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.danger-button:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.danger-button:disabled:hover {
+  background: #c94f3b;
+  transform: none;
+}
+
+.queue-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 76px 0 34px;
+}
+
+.queue-page-heading #page-title {
+  margin: 0;
+}
+
+.queue-page-heading p {
+  margin: 10px 0 0;
+  color: #837969;
+  font-size: 13px;
+}
+
+.queue-snooze-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.queue-snooze-action span {
+  color: #837969;
+  font-size: 11px;
+}
+
+.queue-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 22px;
+}
+
+.queue-section {
+  min-height: 300px;
+  padding: 24px;
+}
+
+.queue-section .section-header {
+  font-size: 23px;
+}
+
+.queue-section .problem-card {
+  align-items: flex-start;
+}
+
+.queue-section .problem-card h3 {
+  white-space: normal;
+}
+
+.queue-empty-state {
+  min-height: 195px;
+  padding: 20px;
 }
 
 .review-log-layout {
@@ -1037,7 +1155,8 @@ textarea.input-card {
   .log-layout,
   .detail-layout,
   .history-layout,
-  .review-log-layout {
+  .review-log-layout,
+  .queue-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1057,6 +1176,19 @@ textarea.input-card {
   .header-navigation {
     order: 2;
     width: 100%;
+  }
+
+  .queue-page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .queue-page-heading .danger-button {
+    align-self: flex-start;
+  }
+
+  .queue-snooze-action {
+    align-items: flex-start;
   }
 
   .header-page-link {
