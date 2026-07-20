@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type KeyboardEvent } from "react"
 import AttemptDetail from "./AttemptDetail"
 import Dashboard from "./Dashboard"
 import Footer from "./Footer"
@@ -48,8 +48,8 @@ type SliderInputProps = {
   onChange: (value: number) => void
 }
 
-const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024
 const DEFAULT_TIME_SPENT = 15
+const LOG_FIELD_SELECTOR = "input:not([disabled]), select:not([disabled]), textarea:not([disabled])"
 
 function SliderInput({ label, value, valueLabel, min, max, step = 1, onChange }: SliderInputProps) {
   const displayedValue = valueLabel ?? String(value)
@@ -118,25 +118,6 @@ function getRoute(): Route {
   }
 }
 
-function fileToDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result)
-      } else {
-        reject(new Error("Could not read the image"))
-      }
-    }
-    reader.onerror = () => {
-      reject(reader.error ?? new Error("Could not read the image"))
-    }
-
-    reader.readAsDataURL(file)
-  })
-}
-
 function App() {
   // Route and preferences initialize directly from browser state.
   const [route, setRoute] = useState<Route>(getRoute)
@@ -150,7 +131,6 @@ function App() {
   const [url, setUrl] = useState("")
   const [rating, setRating] = useState(settings.defaultRating)
   const [subject, setSubject] = useState(settings.defaultSubject)
-  const [screenshot, setScreenshot] = useState("")
 
   // New-log attempt fields.
   const [attemptDate, setAttemptDate] = useState(() => localDateKey())
@@ -161,9 +141,7 @@ function App() {
   const [recognitionClue, setRecognitionClue] = useState("")
   const [contestStatus, setContestStatus] = useState(settings.defaultContestStatus)
 
-  // Form feedback is kept separate so image failures do not block other fields.
   const [error, setError] = useState("")
-  const [screenshotError, setScreenshotError] = useState("")
 
   // Lazy initializers read local storage only during the first render.
   const [problems, setProblems] = useState<Problem[]>(loadProblems)
@@ -221,27 +199,6 @@ function App() {
     )))
   }
 
-  // Images are validated before being stored as local data URLs.
-  async function handleScreenshot(file?: File) {
-    if (!file) return
-
-    if (!file.type.startsWith("image/")) {
-      setScreenshotError("Please choose a valid image.")
-      return
-    }
-
-    if (file.size > MAX_SCREENSHOT_BYTES) {
-      setScreenshotError("Please choose an image smaller than 2 MB.")
-      return
-    }
-    try {
-      setScreenshot(await fileToDataURL(file))
-      setScreenshotError("")
-    } catch {
-      setScreenshotError("The screenshot could not be read.")
-    }
-  }
-
   function resetLogForm() {
     setYear("")
     setContest("")
@@ -250,7 +207,6 @@ function App() {
     setUrl("")
     setRating(settings.defaultRating)
     setSubject(settings.defaultSubject)
-    setScreenshot("")
     setAttemptDate(localDateKey())
     setResult("")
     setTimeSpent(DEFAULT_TIME_SPENT)
@@ -259,7 +215,37 @@ function App() {
     setRecognitionClue("")
     setContestStatus(settings.defaultContestStatus)
     setError("")
-    setScreenshotError("")
+  }
+
+  function handleLogFieldNavigation(event: KeyboardEvent<HTMLDivElement>) {
+    const currentField = event.target
+    if (!(
+      currentField instanceof HTMLInputElement
+      || currentField instanceof HTMLSelectElement
+      || currentField instanceof HTMLTextAreaElement
+    )) return
+
+    const fields = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(LOG_FIELD_SELECTOR))
+    const currentIndex = fields.indexOf(currentField)
+    if (currentIndex === -1) return
+
+    if (event.key === "Enter") {
+      const nextField = fields[currentIndex + 1]
+      if (nextField) {
+        event.preventDefault()
+        nextField.focus()
+      }
+      return
+    }
+
+    const isDeleteKey = event.key === "Delete" || event.key === "Backspace"
+    if (isDeleteKey && currentField.value === "") {
+      const previousField = fields[currentIndex - 1]
+      if (previousField) {
+        event.preventDefault()
+        previousField.focus()
+      }
+    }
   }
 
   function saveLog() {
@@ -294,13 +280,12 @@ function App() {
     const savedProblem: Problem = {
       id: crypto.randomUUID(),
       year: year.trim(),
-      contest: contest.trim(),
+      contest: contest.trim().toUpperCase(),
       subcontest: subcontest.trim(),
       problemNumber: problemNumber.trim(),
       url: url.trim(),
       rating,
       subject,
-      screenshot: screenshot || undefined,
       reviewDate: addCalendarDays(attemptDate, reviewDelayDays),
     }
 
@@ -330,10 +315,10 @@ function App() {
         {route.page === "log" ? (
         <>
           <h1 id="page-title">Create a new log</h1>
-          <div className="log-layout">
-            <div>
-              <section className="dashboard-card">
-                <div className="form-section">
+          <div className="log-layout" onKeyDown={handleLogFieldNavigation}>
+            <section className="dashboard-card log-panel">
+              <h2 className="section-header">Problem details</h2>
+              <div className="form-section log-panel-fields">
                   <label className="input-field">
                     <span className="input-description">problem year</span>
                     <input
@@ -352,8 +337,9 @@ function App() {
                       className="input-card"
                       placeholder="AMC10"
                       value={contest}
+                      autoCapitalize="characters"
                       onChange={(event) => {
-                        setContest(event.target.value)
+                        setContest(event.target.value.toUpperCase())
                       }}
                     />
                   </label>
@@ -423,9 +409,12 @@ function App() {
                     step={50}
                     onChange={setRating}
                   />
-                </div>
+              </div>
+            </section>
 
-                <div className="form-section">
+            <section className="dashboard-card log-panel">
+              <h2 className="section-header">Attempt details</h2>
+              <div className="form-section log-panel-fields">
                   <label className="input-field">
                     <span className="input-description">attempt date</span>
                     <input
@@ -531,61 +520,16 @@ function App() {
                     />
                   </label>
 
-                </div>
-              </section>
-              <div className="log-form-footer">
-                <button className="button-style create-log-button" type="button"
-                  onClick={saveLog}
-                >
-                  Create log
-                </button>
-                {error !== "" && <span className="log-form-error" role="alert">{error}</span>}
               </div>
-            </div>
-
-            <aside className="dashboard-card screenshot-panel">
-              <h2>Problem screenshot</h2>
-              <p>Optionally attach an image of the problem.</p>
-
-              {screenshot ? (
-                <div className="screenshot-preview">
-                  <img src={screenshot} alt="Problem screenshot preview" />
-                  <div className="screenshot-actions">
-                    <label className="secondary-button">
-                      Replace
-                      <input
-                        className="visually-hidden"
-                        type="file"
-                        accept="image/*"
-                        onChange={(event) => {
-                          void handleScreenshot(event.target.files?.[0])
-                        }}
-                      />
-                    </label>
-                    <button className="secondary-button" type="button" onClick={() => setScreenshot("")}>
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <label className="screenshot-upload">
-                  <input
-                    className="visually-hidden"
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => {
-                      void handleScreenshot(event.target.files?.[0])
-                    }}
-                  />
-                  <strong>Choose an image</strong>
-                  <small>PNG, JPG, or another image under 2 MB</small>
-                </label>
-              )}
-
-              {screenshotError !== "" && (
-                <p className="screenshot-error" role="alert">{screenshotError}</p>
-              )}
-            </aside>
+            </section>
+          </div>
+          <div className="log-form-footer">
+            <button className="button-style create-log-button" type="button"
+              onClick={saveLog}
+            >
+              Create log
+            </button>
+            {error !== "" && <span className="log-form-error" role="alert">{error}</span>}
           </div>
         </>
       ) : route.page === "attempt" ? (

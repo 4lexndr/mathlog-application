@@ -736,6 +736,20 @@ button {
   gap: 22px;
 }
 
+.log-layout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.log-panel {
+  min-height: 0;
+}
+
+.log-panel-fields {
+  padding-top: 24px;
+  border-top: 1px solid #ece1cc;
+  margin-top: 24px;
+}
+
 .form-section + .form-section,
 .detail-section + .detail-section {
   padding-top: 24px;
@@ -972,8 +986,7 @@ textarea.input-card {
   margin-top: 22px;
 }
 
-.form-error,
-.screenshot-error {
+.form-error {
   color: #973f2c;
   font-size: 12px;
   line-height: 1.45;
@@ -1012,59 +1025,6 @@ textarea.input-card {
   outline-offset: 3px;
 }
 
-/* Screenshot upload panel. */
-
-.screenshot-panel {
-  min-height: 0;
-  padding: 24px;
-}
-
-.screenshot-panel h2 {
-  margin: 0 0 7px;
-  color: #31291d;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 22px;
-  font-weight: 500;
-}
-
-.screenshot-panel > p {
-  margin: 0 0 18px;
-  color: #8a8174;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.screenshot-upload {
-  display: flex;
-  min-height: 190px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 22px;
-  border: 1px dashed #cfae6e;
-  border-radius: 12px;
-  color: #78571f;
-  background: #fffaf0;
-  text-align: center;
-  cursor: pointer;
-}
-
-.screenshot-upload:hover {
-  background: #fff3da;
-}
-
-.screenshot-upload:focus-within {
-  outline: var(--focus-ring);
-  outline-offset: 3px;
-}
-
-.screenshot-upload small {
-  color: #958875;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
 .screenshot-preview {
   overflow: hidden;
   border: 1px solid #e4d1a9;
@@ -1077,14 +1037,6 @@ textarea.input-card {
   width: 100%;
   max-height: 400px;
   object-fit: contain;
-}
-
-.screenshot-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 11px;
-  border-top: 1px solid #e4d1a9;
 }
 
 /* History and attempt-detail states. */
@@ -1170,10 +1122,6 @@ textarea.input-card {
   text-align: center;
 }
 
-.screenshot-error {
-  margin: 15px 5px 0 0;
-}
-
 /* Responsive adjustments are grouped so breakpoint behavior is easy to scan. */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1246,14 +1194,12 @@ textarea.input-card {
     grid-column: auto;
   }
 
-  .form-actions,
-  .screenshot-actions {
+  .form-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .form-actions > *,
-  .screenshot-actions > * {
+  .form-actions > * {
     width: 100%;
   }
 }
