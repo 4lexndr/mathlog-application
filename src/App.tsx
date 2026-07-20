@@ -19,10 +19,12 @@ import {
   type AppSettings,
   addCalendarDays,
   loadAttempts,
+  loadPreferences,
   loadProblems,
   loadSettings,
   localDateKey,
   saveData,
+  savePreferences,
   saveSettings,
 } from "./storage.ts"
 import { getReviewDelayDays } from "./reviewSchedule.ts"
@@ -163,6 +165,16 @@ function App() {
     saveData(problems, attempts)
   }, [problems, attempts])
 
+  // Reapply the last successful log's choices whenever the log page opens.
+  useEffect(() => {
+    if (route.page !== "log") return
+
+    const preferences = loadPreferences()
+    if (preferences.rating !== undefined) setRating(preferences.rating)
+    if (preferences.subject !== undefined) setSubject(preferences.subject)
+    if (preferences.contestStatus !== undefined) setContestStatus(preferences.contestStatus)
+  }, [route.page])
+
   function handleSaveSettings(nextSettings: AppSettings) {
     saveSettings(nextSettings)
     setSettings(nextSettings)
@@ -200,20 +212,22 @@ function App() {
   }
 
   function resetLogForm() {
+    const preferences = loadPreferences()
+
     setYear("")
     setContest("")
     setSubcontest("")
     setProblemNumber("")
     setUrl("")
-    setRating(settings.defaultRating)
-    setSubject(settings.defaultSubject)
+    setRating(preferences.rating ?? settings.defaultRating)
+    setSubject(preferences.subject ?? settings.defaultSubject)
     setAttemptDate(localDateKey())
     setResult("")
     setTimeSpent(DEFAULT_TIME_SPENT)
     setMistakeType("")
     setLearning("")
     setRecognitionClue("")
-    setContestStatus(settings.defaultContestStatus)
+    setContestStatus(preferences.contestStatus ?? settings.defaultContestStatus)
     setError("")
   }
 
@@ -302,6 +316,7 @@ function App() {
       contestStatus,
     }
 
+    savePreferences({ rating, subject, contestStatus })
     setProblems((previous) => [...previous, savedProblem])
     setAttempts((previous) => [...previous, newAttempt])
     resetLogForm()

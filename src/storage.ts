@@ -3,6 +3,7 @@ import type { Attempt, Problem } from "./types.ts"
 const PROBLEMS_KEY = "problems"
 const ATTEMPTS_KEY = "attempts"
 const SETTINGS_KEY = "settings"
+const PREFERENCES_KEY = "preferences"
 
 type StoredAttempt = Omit<Attempt, "contestStatus"> & {
   contestStatus?: string
@@ -13,6 +14,12 @@ export interface AppSettings {
   defaultSubject: string
   defaultRating: number
   defaultContestStatus: string
+}
+
+export interface LogPreferences {
+  rating: number
+  subject: string
+  contestStatus: string
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -109,6 +116,38 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(settings: AppSettings): void {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+}
+
+// Load only valid saved fields so an absent or empty preference record changes nothing.
+export function loadPreferences(): Partial<LogPreferences> {
+  try {
+    const stored = localStorage.getItem(PREFERENCES_KEY)
+    if (!stored?.trim()) return {}
+
+    const parsed: unknown = JSON.parse(stored)
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {}
+
+    const saved = parsed as Partial<LogPreferences>
+    const preferences: Partial<LogPreferences> = {}
+
+    if (typeof saved.rating === "number" && Number.isFinite(saved.rating)) {
+      preferences.rating = Math.min(2000, Math.max(1500, Math.round(saved.rating / 50) * 50))
+    }
+    if (["algebra", "combinatorics", "geometry", "number-theory"].includes(saved.subject ?? "")) {
+      preferences.subject = saved.subject
+    }
+    if (saved.contestStatus === "rated" || saved.contestStatus === "unrated") {
+      preferences.contestStatus = saved.contestStatus
+    }
+
+    return preferences
+  } catch {
+    return {}
+  }
+}
+
+export function savePreferences(preferences: LogPreferences): void {
+  localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences))
 }
 
 // Save both related collections from one place so App does not know their storage keys.
