@@ -20,6 +20,7 @@ import {
   loadAttempts,
   loadProblems,
   loadSettings,
+  localDateKey,
   saveData,
   saveSettings,
 } from "./storage.ts"
@@ -146,6 +147,7 @@ function App() {
   const [screenshot, setScreenshot] = useState("")
 
   // New-log attempt fields.
+  const [attemptDate, setAttemptDate] = useState(() => localDateKey())
   const [result, setResult] = useState("")
   const [timeSpent, setTimeSpent] = useState(DEFAULT_TIME_SPENT)
   const [mistakeType, setMistakeType] = useState("")
@@ -220,6 +222,7 @@ function App() {
     setRating(settings.defaultRating)
     setSubject(settings.defaultSubject)
     setScreenshot("")
+    setAttemptDate(localDateKey())
     setResult("")
     setTimeSpent(DEFAULT_TIME_SPENT)
     setMistakeType("")
@@ -234,6 +237,11 @@ function App() {
     // Validate required fields before creating either side of the data relationship.
     if (!year.trim() || !contest.trim() || !problemNumber.trim() || !subject) {
       setError("Please fill in the year, contest, problem number, and subject.")
+      return
+    }
+
+    if (!attemptDate) {
+      setError("Please select a date for this attempt.")
       return
     }
 
@@ -252,7 +260,6 @@ function App() {
       return
     }
 
-    const attemptDate = new Date()
     const savedMistakeType = result === "independent" ? "" : mistakeType
     const reviewDelayDays = getReviewDelayDays(result)
     const savedProblem: Problem = {
@@ -271,7 +278,7 @@ function App() {
     const newAttempt: Attempt = {
       id: crypto.randomUUID(),
       problemId: savedProblem.id,
-      date: attemptDate.toISOString(),
+      date: attemptDate,
       isReview: false,
       result,
       timeSpent,
@@ -390,6 +397,18 @@ function App() {
                 </div>
 
                 <div className="form-section">
+                  <label className="input-field">
+                    <span className="input-description">attempt date</span>
+                    <input
+                      className="input-card"
+                      type="date"
+                      value={attemptDate}
+                      onChange={(event) => {
+                        setAttemptDate(event.target.value)
+                      }}
+                    />
+                  </label>
+
                   <label className="input-field">
                     <span className="input-description">result</span>
                     <select

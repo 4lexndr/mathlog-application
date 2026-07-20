@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { Attempt, Problem } from "./types.ts"
 import { resultOptions, subjectOptions } from "./types.ts"
-import { formatProblemTitle, labelForOption } from "./storage.ts"
+import { formatProblemTitle, labelForOption, localDateKey } from "./storage.ts"
 
 interface ReviewLogProps {
   problemId: string
@@ -13,6 +13,7 @@ interface ReviewLogProps {
 const DEFAULT_TIME_SPENT = 15
 
 function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
+  const [reviewDate, setReviewDate] = useState(() => localDateKey())
   const [result, setResult] = useState("")
   const [timeSpent, setTimeSpent] = useState(DEFAULT_TIME_SPENT)
   const [error, setError] = useState("")
@@ -34,6 +35,11 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
   const savedContestStatus = originalAttempt.contestStatus
 
   function saveReview() {
+    if (!reviewDate) {
+      setError("Please select a date for this review.")
+      return
+    }
+
     if (!result) {
       setError("Please select a result for this review.")
       return
@@ -42,7 +48,7 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
     onSave({
       id: crypto.randomUUID(),
       problemId: savedProblemId,
-      date: new Date().toISOString(),
+      date: reviewDate,
       isReview: true,
       result,
       timeSpent,
@@ -99,6 +105,19 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
           </div>
 
           <div className="review-log-fields">
+            <label className="input-field">
+              <span className="input-description">review date</span>
+              <input
+                className="input-card"
+                type="date"
+                value={reviewDate}
+                onChange={(event) => {
+                  setReviewDate(event.target.value)
+                  setError("")
+                }}
+              />
+            </label>
+
             <label className="input-field">
               <span className="input-description">result</span>
               <select
