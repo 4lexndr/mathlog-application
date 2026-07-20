@@ -41,7 +41,11 @@ function Journal({ problems, attempts }: JournalProps) {
             <p>Add a short lesson when logging a problem and it will appear here.</p>
           </div>
         ) : (
-          <ul className="journal-list">
+          <ul
+            className="journal-list scroll-list journal-scroll-list"
+            aria-labelledby="journal-heading"
+            tabIndex={0}
+          >
             {entries.map((attempt) => {
               const problem = problemById.get(attempt.problemId)
 

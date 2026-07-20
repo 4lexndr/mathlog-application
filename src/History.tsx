@@ -56,7 +56,12 @@ function HistoryCard({
           <p>{emptyDescription}</p>
         </div>
       ) : (
-        <div className="problem-list">
+        <div
+          className="problem-list scroll-list history-problem-list"
+          role="region"
+          aria-labelledby={headingId}
+          tabIndex={0}
+        >
           {attempts.map((attempt) => {
             const problem = problemById.get(attempt.problemId)
             const result = labelForOption(resultOptions, attempt.result)

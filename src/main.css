@@ -338,6 +338,26 @@ button {
   margin-top: 25px;
 }
 
+.scroll-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.scroll-list:focus-visible {
+  border-radius: 6px;
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.problem-list.scroll-list {
+  padding: 3px 10px 8px 3px;
+}
+
+.problem-list.scroll-list > .problem-card {
+  flex: 0 0 auto;
+}
+
 .problem-card {
   display: flex;
   min-height: 79px;
@@ -606,6 +626,11 @@ button {
   margin-top: 27px;
 }
 
+.subject-scroll-list {
+  max-height: 168px;
+  padding: 3px 10px 5px 3px;
+}
+
 .subject-bar-heading {
   display: flex;
   align-items: baseline;
@@ -643,6 +668,11 @@ button {
   padding: 0;
   margin: 25px 0 0;
   list-style: none;
+}
+
+.journal-scroll-list {
+  max-height: 270px;
+  padding-right: 10px;
 }
 
 .journal-entry {
@@ -837,20 +867,11 @@ button {
 }
 
 .queue-problem-list {
-  max-height: clamp(240px, 48vh, 440px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 3px 10px 8px 3px;
-  scrollbar-gutter: stable;
-}
-
-.queue-problem-list:focus-visible {
-  border-radius: 6px;
-  outline: var(--focus-ring);
-  outline-offset: 3px;
+  max-height: 367px;
 }
 
 .queue-section .problem-card {
+  min-height: 112px;
   align-items: flex-start;
 }
 
@@ -1084,6 +1105,10 @@ textarea.input-card {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: 22px;
+}
+
+.history-problem-list {
+  max-height: 268px;
 }
 
 .problem-card-button {

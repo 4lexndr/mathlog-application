@@ -218,7 +218,12 @@ function Dashboard({ problems, attempts }: DashboardProps) {
             </span>
           </div>
 
-          <div className="subject-chart" role="list" aria-label="Problems by subject">
+          <div
+            className="subject-chart scroll-list subject-scroll-list"
+            role="list"
+            aria-label="Problems by subject"
+            tabIndex={0}
+          >
             {subjectDistribution.map((subject) => {
               const percentage = categorizedProblems === 0
                 ? 0

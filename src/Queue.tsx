@@ -50,7 +50,7 @@ function QueueSection({
         </div>
       ) : (
         <div
-          className="problem-list queue-problem-list"
+          className="problem-list scroll-list queue-problem-list"
           role="region"
           aria-labelledby={headingId}
           tabIndex={0}
