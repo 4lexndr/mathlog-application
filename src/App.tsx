@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from "react"
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react"
 import AttemptDetail from "./AttemptDetail"
 import ContestDetail from "./ContestDetail"
 import Dashboard from "./Dashboard"
@@ -25,6 +25,7 @@ import {
   loadProblems,
   loadSettings,
   localDateKey,
+  problemIdentityKey,
   saveData,
   savePreferences,
   saveSettings,
@@ -162,11 +163,18 @@ function App() {
   const [contestScore, setContestScore] = useState("")
 
   const [error, setError] = useState("")
+  const [invalidFields, setInvalidFields] = useState<Set<string>>(() => new Set())
 
   // Lazy initializers read local storage only during the first render.
   const [problems, setProblems] = useState<Problem[]>(loadProblems)
   const [attempts, setAttempts] = useState<Attempt[]>(loadAttempts)
   const [contests, setContests] = useState<Contest[]>(loadContests)
+  const duplicateProblemExists = useMemo(() => {
+    if (!year.trim() || !contest.trim() || !problemNumber.trim()) return false
+
+    const draftIdentity = problemIdentityKey({ year, contest, subcontest, problemNumber })
+    return problems.some((problem) => problemIdentityKey(problem) === draftIdentity)
+  }, [contest, problemNumber, problems, subcontest, year])
 
   // Keep React state synchronized with navigation links and browser history.
   useEffect(() => {
@@ -205,6 +213,71 @@ function App() {
   function saveReviewAttempt(attempt: Attempt) {
     setAttempts((previous) => [...previous, attempt])
     window.location.hash = "dashboard"
+  }
+
+  function updateAttemptLog(updatedProblem: Problem, updatedAttempt: Attempt) {
+    setProblems((previous) => previous.map((problem) => (
+      problem.id === updatedProblem.id ? updatedProblem : problem
+    )))
+    setAttempts((previous) => previous.map((attempt) => (
+      attempt.id === updatedAttempt.id ? updatedAttempt : attempt
+    )))
+  }
+
+  function deleteAttemptLog(attemptId: string) {
+    const deletedAttempt = attempts.find((attempt) => attempt.id === attemptId)
+    if (!deletedAttempt) return
+
+    setAttempts((previous) => previous.filter((attempt) => attempt.id !== attemptId))
+    if (!attempts.some((attempt) => (
+      attempt.id !== attemptId && attempt.problemId === deletedAttempt.problemId
+    ))) {
+      setProblems((previous) => previous.filter((problem) => problem.id !== deletedAttempt.problemId))
+    }
+    window.location.hash = "history"
+  }
+
+  function updateContestLog(updatedContest: Contest) {
+    setContests((previous) => previous.map((contest) => (
+      contest.id === updatedContest.id ? updatedContest : contest
+    )))
+  }
+
+  function deleteContestLog(contestId: string) {
+    setContests((previous) => previous.filter((contest) => contest.id !== contestId))
+    window.location.hash = "history"
+  }
+
+  function removeDuplicateProblemLogs() {
+    const canonicalProblemIdByIdentity = new Map<string, string>()
+    const canonicalProblemIdByDuplicateId = new Map<string, string>()
+
+    for (const problem of problems) {
+      const identity = problemIdentityKey(problem)
+      const canonicalProblemId = canonicalProblemIdByIdentity.get(identity)
+
+      if (canonicalProblemId) {
+        canonicalProblemIdByDuplicateId.set(problem.id, canonicalProblemId)
+      } else {
+        canonicalProblemIdByIdentity.set(identity, problem.id)
+      }
+    }
+
+    if (canonicalProblemIdByDuplicateId.size === 0) return
+    if (!window.confirm(
+      "Remove duplicate problem logs? Later duplicate attempts will be permanently deleted. Reviews will be preserved.",
+    )) return
+
+    setProblems((previous) => previous.filter((problem) => (
+      !canonicalProblemIdByDuplicateId.has(problem.id)
+    )))
+    setAttempts((previous) => previous.flatMap((attempt) => {
+      const canonicalProblemId = canonicalProblemIdByDuplicateId.get(attempt.problemId)
+      if (!canonicalProblemId) return [attempt]
+
+      // Duplicate initial logs are removed; reviews remain useful on the retained problem.
+      return attempt.isReview ? [{ ...attempt, problemId: canonicalProblemId }] : []
+    }))
   }
 
   function snoozeProblems(problemIds: string[]) {
@@ -254,6 +327,17 @@ function App() {
     setContestDate(localDateKey())
     setContestScore("")
     setError("")
+    setInvalidFields(new Set())
+  }
+
+  function clearInvalidField(field: string) {
+    setInvalidFields((previous) => {
+      if (!previous.has(field)) return previous
+
+      const next = new Set(previous)
+      next.delete(field)
+      return next
+    })
   }
 
   function handleLogFieldNavigation(event: KeyboardEvent<HTMLDivElement>) {
@@ -288,29 +372,22 @@ function App() {
   }
 
   function saveLog() {
-    // Validate required fields before creating either side of the data relationship.
-    if (!year.trim() || !contest.trim() || !problemNumber.trim() || !subject) {
-      setError("Please fill in the year, contest, problem number, and subject.")
-      return
+    // Validate every required field at once so all needed corrections are visible.
+    const nextInvalidFields = new Set<string>()
+    if (!year.trim()) nextInvalidFields.add("problem-year")
+    if (!contest.trim()) nextInvalidFields.add("problem-contest")
+    if (!problemNumber.trim()) nextInvalidFields.add("problem-number")
+    if (!subject) nextInvalidFields.add("problem-subject")
+    if (!attemptDate) nextInvalidFields.add("attempt-date")
+    if (!result) nextInvalidFields.add("attempt-result")
+    if (result && result !== "independent" && !mistakeType) {
+      nextInvalidFields.add("attempt-mistake-type")
     }
+    if (!contestStatus) nextInvalidFields.add("attempt-contest-status")
 
-    if (!attemptDate) {
-      setError("Please select a date for this attempt.")
-      return
-    }
-
-    if (!result) {
-      setError("Please select a result for this attempt.")
-      return
-    }
-
-    if (result !== "independent" && !mistakeType) {
-      setError("Please select what prevented an independent solution.")
-      return
-    }
-
-    if (!contestStatus) {
-      setError("Please select whether the contest was rated or unrated.")
+    if (nextInvalidFields.size > 0) {
+      setInvalidFields(nextInvalidFields)
+      setError("Please correct the highlighted fields before creating this log.")
       return
     }
 
@@ -350,14 +427,17 @@ function App() {
 
   function saveContestLog() {
     const parsedScore = Number(contestScore)
-
-    if (!contestYear.trim() || !contestName.trim() || !contestDate || contestScore.trim() === "") {
-      setError("Please fill in the year, contest, date, and score.")
-      return
+    const nextInvalidFields = new Set<string>()
+    if (!contestYear.trim()) nextInvalidFields.add("contest-year")
+    if (!contestName.trim()) nextInvalidFields.add("contest-name")
+    if (!contestDate) nextInvalidFields.add("contest-date")
+    if (contestScore.trim() === "" || !Number.isFinite(parsedScore) || parsedScore < 0) {
+      nextInvalidFields.add("contest-score")
     }
 
-    if (!Number.isFinite(parsedScore) || parsedScore < 0) {
-      setError("Please enter a valid score of zero or greater.")
+    if (nextInvalidFields.size > 0) {
+      setInvalidFields(nextInvalidFields)
+      setError("Please correct the highlighted fields before creating this log.")
       return
     }
 
@@ -394,6 +474,7 @@ function App() {
                 onChange={() => {
                   setLogType("problem")
                   setError("")
+                  setInvalidFields(new Set())
                 }}
               />
               <span>Problem</span>
@@ -409,6 +490,7 @@ function App() {
                 onChange={() => {
                   setLogType("contest")
                   setError("")
+                  setInvalidFields(new Set())
                 }}
               />
               <span>Contest</span>
@@ -424,11 +506,16 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">problem year</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("problem-year")
+                        ? "input-error"
+                        : duplicateProblemExists ? "input-warning" : ""}`}
+                      aria-invalid={invalidFields.has("problem-year")}
+                      aria-describedby={duplicateProblemExists ? "duplicate-problem-hint" : undefined}
                       placeholder="2024"
                       value={year}
                       onChange={(event) => {
                         setYear(event.target.value)
+                        clearInvalidField("problem-year")
                       }}
                     />
                   </label>
@@ -436,12 +523,17 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">contest</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("problem-contest")
+                        ? "input-error"
+                        : duplicateProblemExists ? "input-warning" : ""}`}
+                      aria-invalid={invalidFields.has("problem-contest")}
+                      aria-describedby={duplicateProblemExists ? "duplicate-problem-hint" : undefined}
                       placeholder="AMC10"
                       value={contest}
                       autoCapitalize="characters"
                       onChange={(event) => {
                         setContest(event.target.value.toUpperCase())
+                        clearInvalidField("problem-contest")
                       }}
                     />
                   </label>
@@ -449,7 +541,8 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">subcontest (optional)</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${duplicateProblemExists ? "input-warning" : ""}`}
+                      aria-describedby={duplicateProblemExists ? "duplicate-problem-hint" : undefined}
                       placeholder="A"
                       value={subcontest}
                       onChange={(event) => {
@@ -461,13 +554,23 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">problem number</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("problem-number")
+                        ? "input-error"
+                        : duplicateProblemExists ? "input-warning" : ""}`}
+                      aria-invalid={invalidFields.has("problem-number")}
+                      aria-describedby={duplicateProblemExists ? "duplicate-problem-hint" : undefined}
                       placeholder="17"
                       value={problemNumber}
                       onChange={(event) => {
                         setProblemNumber(event.target.value)
+                        clearInvalidField("problem-number")
                       }}
                     />
+                    {duplicateProblemExists && (
+                      <span id="duplicate-problem-hint" className="duplicate-problem-hint" role="status">
+                        This problem has already been logged.
+                      </span>
+                    )}
                   </label>
 
                   <label className="input-field">
@@ -486,10 +589,12 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">subject</span>
                     <select
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("problem-subject") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("problem-subject")}
                       value={subject}
                       onChange={(event) => {
                         setSubject(event.target.value)
+                        clearInvalidField("problem-subject")
                       }}
                     >
                       <option value="" disabled>
@@ -520,11 +625,13 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">attempt date</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("attempt-date") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("attempt-date")}
                       type="date"
                       value={attemptDate}
                       onChange={(event) => {
                         setAttemptDate(event.target.value)
+                        clearInvalidField("attempt-date")
                       }}
                     />
                   </label>
@@ -532,12 +639,15 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">result</span>
                     <select
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("attempt-result") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("attempt-result")}
                       value={result}
                       onChange={(event) => {
                         const nextResult = event.target.value
                         setResult(nextResult)
+                        clearInvalidField("attempt-result")
                         if (nextResult === "independent") setMistakeType("")
+                        if (nextResult === "independent") clearInvalidField("attempt-mistake-type")
                       }}
                     >
                       <option value="" disabled>
@@ -564,10 +674,12 @@ function App() {
                     <label className="input-field">
                       <span className="input-description">mistake type</span>
                       <select
-                        className="input-card"
+                        className={`input-card ${invalidFields.has("attempt-mistake-type") ? "input-error" : ""}`}
+                        aria-invalid={invalidFields.has("attempt-mistake-type")}
                         value={mistakeType}
                         onChange={(event) => {
                           setMistakeType(event.target.value)
+                          clearInvalidField("attempt-mistake-type")
                         }}
                       >
                         <option value="" disabled>Select a mistake type</option>
@@ -583,10 +695,12 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">contest rated or unrated?</span>
                     <select
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("attempt-contest-status") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("attempt-contest-status")}
                       value={contestStatus}
                       onChange={(event) => {
                         setContestStatus(event.target.value)
+                        clearInvalidField("attempt-contest-status")
                       }}
                     >
                       <option value="" disabled>Select rated or unrated</option>
@@ -633,11 +747,13 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">year</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("contest-year") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("contest-year")}
                       placeholder="2026"
                       value={contestYear}
                       onChange={(event) => {
                         setContestYear(event.target.value)
+                        clearInvalidField("contest-year")
                       }}
                     />
                   </label>
@@ -645,12 +761,14 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">contest</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("contest-name") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("contest-name")}
                       placeholder="AMC10"
                       value={contestName}
                       autoCapitalize="characters"
                       onChange={(event) => {
                         setContestName(event.target.value.toUpperCase())
+                        clearInvalidField("contest-name")
                       }}
                     />
                   </label>
@@ -670,11 +788,13 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">contest date</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("contest-date") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("contest-date")}
                       type="date"
                       value={contestDate}
                       onChange={(event) => {
                         setContestDate(event.target.value)
+                        clearInvalidField("contest-date")
                       }}
                     />
                   </label>
@@ -682,7 +802,8 @@ function App() {
                   <label className="input-field">
                     <span className="input-description">score</span>
                     <input
-                      className="input-card"
+                      className={`input-card ${invalidFields.has("contest-score") ? "input-error" : ""}`}
+                      aria-invalid={invalidFields.has("contest-score")}
                       type="number"
                       min="0"
                       step="any"
@@ -691,6 +812,7 @@ function App() {
                       value={contestScore}
                       onChange={(event) => {
                         setContestScore(event.target.value)
+                        clearInvalidField("contest-score")
                       }}
                     />
                   </label>
@@ -708,13 +830,20 @@ function App() {
           </div>
         </>
       ) : route.page === "contest" ? (
-        <ContestDetail contestId={route.contestId} contests={contests} />
+        <ContestDetail
+          contestId={route.contestId}
+          contests={contests}
+          onUpdate={updateContestLog}
+          onDelete={deleteContestLog}
+        />
       ) : route.page === "attempt" ? (
         <AttemptDetail
           attemptId={route.attemptId}
           problems={problems}
           attempts={attempts}
           onSnooze={(problemId) => snoozeProblems([problemId])}
+          onUpdate={updateAttemptLog}
+          onDelete={deleteAttemptLog}
         />
       ) : route.page === "review-log" ? (
         <ReviewLog
@@ -725,7 +854,12 @@ function App() {
           onSave={saveReviewAttempt}
         />
       ) : route.page === "history" ? (
-        <History problems={problems} attempts={attempts} contests={contests} />
+        <History
+          problems={problems}
+          attempts={attempts}
+          contests={contests}
+          onRemoveDuplicates={removeDuplicateProblemLogs}
+        />
       ) : route.page === "journal" ? (
         <Journal problems={problems} attempts={attempts} />
       ) : route.page === "queue" ? (

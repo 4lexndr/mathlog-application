@@ -185,6 +185,19 @@ export function formatProblemTitle(problem: Problem): string {
   return [source, number].filter(Boolean).join(" ") || "Untitled problem"
 }
 
+// Build a normalized key for the four fields that uniquely identify a problem.
+export function problemIdentityKey(problem: Pick<
+  Problem,
+  "year" | "contest" | "subcontest" | "problemNumber"
+>): string {
+  return JSON.stringify([
+    problem.year,
+    problem.contest,
+    problem.subcontest,
+    problem.problemNumber,
+  ].map((value) => value.trim().toLocaleLowerCase()))
+}
+
 export function formatContestTitle(contest: Contest): string {
   return [contest.year, contest.contest, contest.subcontest]
     .map((part) => part.trim())

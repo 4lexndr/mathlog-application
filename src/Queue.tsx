@@ -107,6 +107,13 @@ function Queue({ problems, attempts, onSnoozeAll }: QueueProps) {
     }
   }
 
+  // A deleted initial log may leave valid reviews behind; use one as a navigation fallback.
+  for (const attempt of attempts) {
+    if (!attemptIdByProblem.has(attempt.problemId)) {
+      attemptIdByProblem.set(attempt.problemId, attempt.id)
+    }
+  }
+
   return (
     <>
       <div className="queue-page-heading">

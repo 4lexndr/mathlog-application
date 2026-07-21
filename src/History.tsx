@@ -6,12 +6,14 @@ import {
   formatContestTitle,
   formatProblemTitle,
   labelForOption,
+  problemIdentityKey,
 } from "./storage.ts"
 
 interface HistoryProps {
   problems: Problem[]
   attempts: Attempt[]
   contests: Contest[]
+  onRemoveDuplicates: () => void
 }
 
 interface ContestHistoryCardProps {
@@ -150,7 +152,7 @@ function ContestHistoryCard({ contests, isSearching }: ContestHistoryCardProps) 
   )
 }
 
-function History({ problems, attempts, contests }: HistoryProps) {
+function History({ problems, attempts, contests, onRemoveDuplicates }: HistoryProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const { problemById, searchTextByProblemId } = useMemo(() => {
     const nextProblemById = new Map<string, Problem>()
@@ -213,6 +215,17 @@ function History({ problems, attempts, contests }: HistoryProps) {
     ].join(" "))
     return searchTerms.every((term) => searchText.includes(term))
   }).slice(0, HISTORY_LIMIT), [newestContestsFirst, searchTerms])
+  const hasDuplicateProblems = useMemo(() => {
+    const seenIdentities = new Set<string>()
+
+    for (const problem of problems) {
+      const identity = problemIdentityKey(problem)
+      if (seenIdentities.has(identity)) return true
+      seenIdentities.add(identity)
+    }
+
+    return false
+  }, [problems])
   const isSearching = searchTerms.length > 0
 
   return (
@@ -236,16 +249,27 @@ function History({ problems, attempts, contests }: HistoryProps) {
       </search>
 
       <div className="history-layout">
-        <HistoryCard
-          headingId="history-heading"
-          title="Previous attempts"
-          emptyTitle={isSearching ? "No matching attempts" : "No attempts yet"}
-          emptyDescription={isSearching
-            ? "Try another year, contest, subcontest, or problem number."
-            : "Completed logs will appear here, with the most recent attempt first."}
-          attempts={initialAttempts}
-          problemById={problemById}
-        />
+        <div className="history-card-column">
+          <HistoryCard
+            headingId="history-heading"
+            title="Previous attempts"
+            emptyTitle={isSearching ? "No matching attempts" : "No attempts yet"}
+            emptyDescription={isSearching
+              ? "Try another year, contest, subcontest, or problem number."
+              : "Completed logs will appear here, with the most recent attempt first."}
+            attempts={initialAttempts}
+            problemById={problemById}
+          />
+          {hasDuplicateProblems && (
+            <button
+              className="history-duplicates-link"
+              type="button"
+              onClick={onRemoveDuplicates}
+            >
+              Review duplicates?
+            </button>
+          )}
+        </div>
         <HistoryCard
           headingId="review-history-heading"
           title="Reviews"

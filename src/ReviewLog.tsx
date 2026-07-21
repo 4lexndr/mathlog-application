@@ -17,6 +17,7 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
   const [result, setResult] = useState("")
   const [timeSpent, setTimeSpent] = useState(DEFAULT_TIME_SPENT)
   const [error, setError] = useState("")
+  const [invalidFields, setInvalidFields] = useState<Set<string>>(() => new Set())
   const problem = problems.find((item) => item.id === problemId)
   const originalAttempt = attempts.find((item) => item.problemId === problemId)
 
@@ -35,13 +36,13 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
   const savedContestStatus = originalAttempt.contestStatus
 
   function saveReview() {
-    if (!reviewDate) {
-      setError("Please select a date for this review.")
-      return
-    }
+    const nextInvalidFields = new Set<string>()
+    if (!reviewDate) nextInvalidFields.add("review-date")
+    if (!result) nextInvalidFields.add("review-result")
 
-    if (!result) {
-      setError("Please select a result for this review.")
+    if (nextInvalidFields.size > 0) {
+      setInvalidFields(nextInvalidFields)
+      setError("Please correct the highlighted fields before creating this log.")
       return
     }
 
@@ -108,12 +109,18 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
             <label className="input-field">
               <span className="input-description">review date</span>
               <input
-                className="input-card"
+                className={`input-card ${invalidFields.has("review-date") ? "input-error" : ""}`}
+                aria-invalid={invalidFields.has("review-date")}
                 type="date"
                 value={reviewDate}
                 onChange={(event) => {
                   setReviewDate(event.target.value)
                   setError("")
+                  setInvalidFields((previous) => {
+                    const next = new Set(previous)
+                    next.delete("review-date")
+                    return next
+                  })
                 }}
               />
             </label>
@@ -121,11 +128,17 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
             <label className="input-field">
               <span className="input-description">result</span>
               <select
-                className="input-card"
+                className={`input-card ${invalidFields.has("review-result") ? "input-error" : ""}`}
+                aria-invalid={invalidFields.has("review-result")}
                 value={result}
                 onChange={(event) => {
                   setResult(event.target.value)
                   setError("")
+                  setInvalidFields((previous) => {
+                    const next = new Set(previous)
+                    next.delete("review-result")
+                    return next
+                  })
                 }}
               >
                 <option value="" disabled>Select a result</option>

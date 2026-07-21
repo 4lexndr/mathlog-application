@@ -185,6 +185,41 @@ button {
   outline-offset: 2px;
 }
 
+.input-card.input-error,
+.input-card.input-error:hover {
+  border-color: #c94f3b;
+  background: #fff7f4;
+  box-shadow: 0 0 0 1px rgba(201, 79, 59, 0.18);
+}
+
+.input-card.input-error:focus-visible {
+  border-color: #b94331;
+  outline: 3px solid rgba(201, 79, 59, 0.24);
+  outline-offset: 2px;
+}
+
+.input-card.input-warning,
+.input-card.input-warning:hover {
+  border-color: #df8b18;
+  background: #fffbf2;
+  box-shadow: 0 0 0 1px rgba(223, 139, 24, 0.2);
+}
+
+.input-card.input-warning:focus-visible {
+  border-color: #c87408;
+  outline: 3px solid rgba(223, 139, 24, 0.24);
+  outline-offset: 2px;
+}
+
+.duplicate-problem-hint {
+  display: block;
+  margin-top: 7px;
+  color: #a55f08;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .input-description {
   display: block;
   margin: 0 0 6px;
@@ -821,6 +856,31 @@ button {
   width: min(100%, 720px);
 }
 
+.edit-log-layout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.edit-log-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.edit-log-fields > .input-field {
+  margin-top: 0;
+}
+
+.edit-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.log-detail-actions {
+  flex-wrap: wrap;
+}
+
 .form-section + .form-section,
 .detail-section + .detail-section {
   padding-top: 24px;
@@ -1124,6 +1184,34 @@ textarea.input-card {
   gap: 22px;
 }
 
+.history-card-column {
+  min-width: 0;
+}
+
+.history-duplicates-link {
+  padding: 0;
+  border: 0;
+  margin: 10px 4px 0;
+  color: #815d20;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.history-duplicates-link:hover {
+  color: #5f4214;
+}
+
+.history-duplicates-link:focus-visible {
+  border-radius: 3px;
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
 .contest-history-card {
   min-height: 0;
   margin-top: 22px;
@@ -1331,7 +1419,12 @@ textarea.input-card {
 
   .detail-grid,
   .settings-grid,
-  .contest-log-fields {
+  .contest-log-fields,
+  .edit-log-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-log-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1345,6 +1438,15 @@ textarea.input-card {
   }
 
   .form-actions > * {
+    width: 100%;
+  }
+
+  .edit-log-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .edit-log-actions > * {
     width: 100%;
   }
 }
