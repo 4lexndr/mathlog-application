@@ -26,6 +26,16 @@ export interface Attempt {
   contestStatus: string,
 }
 
+// A contest log records one complete contest result independently of problem attempts.
+export interface Contest {
+  id: string,
+  year: string,
+  contest: string,
+  subcontest: string,
+  date: string,
+  score: number,
+}
+
 // Shared option lists keep stored values and visible labels consistent.
 export const subjectOptions = [
   { value: 'algebra', label: 'Algebra' },

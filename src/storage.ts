@@ -1,7 +1,8 @@
-import type { Attempt, Problem } from "./types.ts"
+import type { Attempt, Contest, Problem } from "./types.ts"
 
 const PROBLEMS_KEY = "problems"
 const ATTEMPTS_KEY = "attempts"
+const CONTESTS_KEY = "contests"
 const SETTINGS_KEY = "settings"
 const PREFERENCES_KEY = "preferences"
 
@@ -86,6 +87,22 @@ export function loadAttempts(): Attempt[] {
   })
 }
 
+export function loadContests(): Contest[] {
+  return loadArray<unknown>(CONTESTS_KEY).filter((item): item is Contest => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return false
+
+    const contest = item as Partial<Contest>
+    return typeof contest.id === "string"
+      && typeof contest.year === "string"
+      && typeof contest.contest === "string"
+      && typeof contest.subcontest === "string"
+      && typeof contest.date === "string"
+      && typeof contest.score === "number"
+      && Number.isFinite(contest.score)
+      && contest.score >= 0
+  })
+}
+
 // Load user preferences defensively so malformed settings cannot break the app.
 export function loadSettings(): AppSettings {
   try {
@@ -151,9 +168,10 @@ export function savePreferences(preferences: LogPreferences): void {
 }
 
 // Save both related collections from one place so App does not know their storage keys.
-export function saveData(problems: Problem[], attempts: Attempt[]): void {
+export function saveData(problems: Problem[], attempts: Attempt[], contests: Contest[]): void {
   localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems))
   localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts))
+  localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests))
 }
 
 // Build the short title used by dashboard cards and log-detail pages.
@@ -165,6 +183,13 @@ export function formatProblemTitle(problem: Problem): string {
   const number = problem.problemNumber.trim() ? `#${problem.problemNumber.trim()}` : ""
 
   return [source, number].filter(Boolean).join(" ") || "Untitled problem"
+}
+
+export function formatContestTitle(contest: Contest): string {
+  return [contest.year, contest.contest, contest.subcontest]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ") || "Untitled contest"
 }
 
 // Display a raw minute count as "45 min", "1h", or "1h 30m".

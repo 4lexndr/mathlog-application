@@ -1,5 +1,6 @@
 import { useEffect, useState, type KeyboardEvent } from "react"
 import AttemptDetail from "./AttemptDetail"
+import ContestDetail from "./ContestDetail"
 import Dashboard from "./Dashboard"
 import Footer from "./Footer"
 import History from "./History"
@@ -8,7 +9,7 @@ import Queue from "./Queue"
 import ReviewLog from "./ReviewLog"
 import Settings from "./Settings"
 import HeaderBar from "./Header"
-import type { Problem, Attempt } from "./types.ts"
+import type { Problem, Attempt, Contest } from "./types.ts"
 import {
   contestStatusOptions,
   mistakeTypeOptions,
@@ -19,6 +20,7 @@ import {
   type AppSettings,
   addCalendarDays,
   loadAttempts,
+  loadContests,
   loadPreferences,
   loadProblems,
   loadSettings,
@@ -37,6 +39,7 @@ type Route =
   | { "page": "settings" }
   | { "page": "queue" }
   | { "page": "log" }
+  | { "page": "contest"; contestId: string }
   | { "page": "review-log"; problemId: string }
   | { "page": "attempt"; attemptId: string }
 
@@ -107,6 +110,13 @@ function getRoute(): Route {
     return { page: "log" }
   }
 
+  if (hash.startsWith("contest-")) {
+    return {
+      page: "contest",
+      contestId: decodeURIComponent(hash.slice("contest-".length)),
+    }
+  }
+
   if (hash.startsWith("review-log-")) {
     return {
       page: "review-log",
@@ -124,6 +134,7 @@ function App() {
   // Route and preferences initialize directly from browser state.
   const [route, setRoute] = useState<Route>(getRoute)
   const [settings, setSettings] = useState<AppSettings>(loadSettings)
+  const [logType, setLogType] = useState<"problem" | "contest">("problem")
 
   // New-log problem fields.
   const [year, setYear] = useState("")
@@ -143,11 +154,19 @@ function App() {
   const [recognitionClue, setRecognitionClue] = useState("")
   const [contestStatus, setContestStatus] = useState(settings.defaultContestStatus)
 
+  // New contest-log fields use separate state so switching log types preserves both drafts.
+  const [contestYear, setContestYear] = useState("")
+  const [contestName, setContestName] = useState("")
+  const [contestSubcontest, setContestSubcontest] = useState("")
+  const [contestDate, setContestDate] = useState(() => localDateKey())
+  const [contestScore, setContestScore] = useState("")
+
   const [error, setError] = useState("")
 
   // Lazy initializers read local storage only during the first render.
   const [problems, setProblems] = useState<Problem[]>(loadProblems)
   const [attempts, setAttempts] = useState<Attempt[]>(loadAttempts)
+  const [contests, setContests] = useState<Contest[]>(loadContests)
 
   // Keep React state synchronized with navigation links and browser history.
   useEffect(() => {
@@ -160,10 +179,10 @@ function App() {
     }
   }, [])
 
-  // Persist both related collections from one effect.
+  // Persist the app's three log collections from one effect.
   useEffect(() => {
-    saveData(problems, attempts)
-  }, [problems, attempts])
+    saveData(problems, attempts, contests)
+  }, [problems, attempts, contests])
 
   // Reapply the last successful log's choices whenever the log page opens.
   useEffect(() => {
@@ -214,6 +233,7 @@ function App() {
   function resetLogForm() {
     const preferences = loadPreferences()
 
+    setLogType("problem")
     setYear("")
     setContest("")
     setSubcontest("")
@@ -228,6 +248,11 @@ function App() {
     setLearning("")
     setRecognitionClue("")
     setContestStatus(preferences.contestStatus ?? settings.defaultContestStatus)
+    setContestYear("")
+    setContestName("")
+    setContestSubcontest("")
+    setContestDate(localDateKey())
+    setContestScore("")
     setError("")
   }
 
@@ -323,6 +348,33 @@ function App() {
     window.location.hash = "dashboard"
   }
 
+  function saveContestLog() {
+    const parsedScore = Number(contestScore)
+
+    if (!contestYear.trim() || !contestName.trim() || !contestDate || contestScore.trim() === "") {
+      setError("Please fill in the year, contest, date, and score.")
+      return
+    }
+
+    if (!Number.isFinite(parsedScore) || parsedScore < 0) {
+      setError("Please enter a valid score of zero or greater.")
+      return
+    }
+
+    const savedContest: Contest = {
+      id: crypto.randomUUID(),
+      year: contestYear.trim(),
+      contest: contestName.trim().toUpperCase(),
+      subcontest: contestSubcontest.trim(),
+      date: contestDate,
+      score: parsedScore,
+    }
+
+    setContests((previous) => [...previous, savedContest])
+    resetLogForm()
+    window.location.hash = "dashboard"
+  }
+
   return (
     <main id="app">
       <HeaderBar resetLogForm={resetLogForm}/>
@@ -330,6 +382,41 @@ function App() {
         {route.page === "log" ? (
         <>
           <h1 id="page-title">Create a new log</h1>
+          <fieldset className="log-type-selector">
+            <legend className="visually-hidden">Choose a log type</legend>
+            <label className={`log-type-option ${logType === "problem" ? "selected" : ""}`}>
+              <input
+                className="visually-hidden"
+                type="radio"
+                name="log-type"
+                value="problem"
+                checked={logType === "problem"}
+                onChange={() => {
+                  setLogType("problem")
+                  setError("")
+                }}
+              />
+              <span>Problem</span>
+              <small>Record one problem attempt</small>
+            </label>
+            <label className={`log-type-option ${logType === "contest" ? "selected" : ""}`}>
+              <input
+                className="visually-hidden"
+                type="radio"
+                name="log-type"
+                value="contest"
+                checked={logType === "contest"}
+                onChange={() => {
+                  setLogType("contest")
+                  setError("")
+                }}
+              />
+              <span>Contest</span>
+              <small>Record a complete contest score</small>
+            </label>
+          </fieldset>
+
+          {logType === "problem" ? (
           <div className="log-layout" onKeyDown={handleLogFieldNavigation}>
             <section className="dashboard-card log-panel">
               <h2 className="section-header">Problem details</h2>
@@ -538,15 +625,90 @@ function App() {
               </div>
             </section>
           </div>
+          ) : (
+            <div className="contest-log-layout" onKeyDown={handleLogFieldNavigation}>
+              <section className="dashboard-card log-panel">
+                <h2 className="section-header">Contest details</h2>
+                <div className="form-section log-panel-fields contest-log-fields">
+                  <label className="input-field">
+                    <span className="input-description">year</span>
+                    <input
+                      className="input-card"
+                      placeholder="2026"
+                      value={contestYear}
+                      onChange={(event) => {
+                        setContestYear(event.target.value)
+                      }}
+                    />
+                  </label>
+
+                  <label className="input-field">
+                    <span className="input-description">contest</span>
+                    <input
+                      className="input-card"
+                      placeholder="AMC10"
+                      value={contestName}
+                      autoCapitalize="characters"
+                      onChange={(event) => {
+                        setContestName(event.target.value.toUpperCase())
+                      }}
+                    />
+                  </label>
+
+                  <label className="input-field">
+                    <span className="input-description">subcontest (optional)</span>
+                    <input
+                      className="input-card"
+                      placeholder="A"
+                      value={contestSubcontest}
+                      onChange={(event) => {
+                        setContestSubcontest(event.target.value)
+                      }}
+                    />
+                  </label>
+
+                  <label className="input-field">
+                    <span className="input-description">contest date</span>
+                    <input
+                      className="input-card"
+                      type="date"
+                      value={contestDate}
+                      onChange={(event) => {
+                        setContestDate(event.target.value)
+                      }}
+                    />
+                  </label>
+
+                  <label className="input-field">
+                    <span className="input-description">score</span>
+                    <input
+                      className="input-card"
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputMode="decimal"
+                      placeholder="120"
+                      value={contestScore}
+                      onChange={(event) => {
+                        setContestScore(event.target.value)
+                      }}
+                    />
+                  </label>
+                </div>
+              </section>
+            </div>
+          )}
           <div className="log-form-footer">
             <button className="button-style create-log-button" type="button"
-              onClick={saveLog}
+              onClick={logType === "problem" ? saveLog : saveContestLog}
             >
-              Create log
+              {logType === "problem" ? "Create problem log" : "Create contest log"}
             </button>
             {error !== "" && <span className="log-form-error" role="alert">{error}</span>}
           </div>
         </>
+      ) : route.page === "contest" ? (
+        <ContestDetail contestId={route.contestId} contests={contests} />
       ) : route.page === "attempt" ? (
         <AttemptDetail
           attemptId={route.attemptId}
@@ -563,7 +725,7 @@ function App() {
           onSave={saveReviewAttempt}
         />
       ) : route.page === "history" ? (
-        <History problems={problems} attempts={attempts} />
+        <History problems={problems} attempts={attempts} contests={contests} />
       ) : route.page === "journal" ? (
         <Journal problems={problems} attempts={attempts} />
       ) : route.page === "queue" ? (
