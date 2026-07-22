@@ -773,7 +773,7 @@ button {
 .mistake-contender > strong {
   display: block;
   overflow-wrap: anywhere;
-  color: var(--button-text);
+  color: var(--heading);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 18px;
   font-weight: 500;
@@ -1675,6 +1675,11 @@ textarea.input-card {
 .attempt-edit-panel,
 .problem-edit-panel {
   min-height: 0;
+}
+
+.attempt-edit-panel {
+  width: min(100%, 549px);
+  margin: 0 auto;
 }
 
 .contest-history-empty {

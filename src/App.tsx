@@ -9,6 +9,7 @@ import ProblemDetail from "./ProblemDetail"
 import Queue from "./Queue"
 import ReviewLog from "./ReviewLog"
 import Settings from "./Settings"
+import SliderInput from "./SliderInput"
 import HeaderBar from "./Header"
 import type { Problem, Attempt, AttemptDraft, Contest } from "./types.ts"
 import {
@@ -46,44 +47,8 @@ type Route =
   | { "page": "problem"; problemId: string }
   | { "page": "attempt"; attemptId: string }
 
-type SliderInputProps = {
-  label: string
-  value: number
-  valueLabel?: string
-  min: number
-  max: number
-  step?: number
-  onChange: (value: number) => void
-}
-
 const DEFAULT_TIME_SPENT = 15
 const LOG_FIELD_SELECTOR = "input:not([disabled]), select:not([disabled]), textarea:not([disabled])"
-
-function SliderInput({ label, value, valueLabel, min, max, step = 1, onChange }: SliderInputProps) {
-  const displayedValue = valueLabel ?? String(value)
-
-  return (
-    <div className="slider-input">
-      <div className="slider-input-header">
-        <span className="input-description">{label}</span>
-        <span className="slider-value">{displayedValue}</span>
-      </div>
-      <input
-        className="slider-track"
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        aria-label={label}
-        aria-valuetext={displayedValue}
-        onChange={(event) => {
-          onChange(Number(event.target.value))
-        }}
-      />
-    </div>
-  )
-}
 
 function getRoute(): Route {
   // Hash routing keeps every page deployable as one static Vite entry point.

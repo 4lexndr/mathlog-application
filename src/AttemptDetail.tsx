@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { Attempt, Problem } from "./types.ts"
 import { contestStatusOptions, mistakeTypeOptions, resultOptions } from "./types.ts"
 import { formatDate, formatDuration, formatProblemTitle, labelForOption } from "./storage.ts"
+import SliderInput from "./SliderInput"
 
 interface AttemptDetailProps {
   attemptId: string
@@ -64,6 +65,7 @@ function AttemptDetail({ attemptId, problems, attempts, onUpdate, onDelete }: At
       && draftAttempt.result !== "independent"
       && !draftAttempt.mistakeType
     ) nextInvalidFields.add("edit-attempt-mistake-type")
+    if (!draftAttempt.contestStatus) nextInvalidFields.add("edit-attempt-contest-status")
 
     if (nextInvalidFields.size > 0) {
       setInvalidFields(nextInvalidFields)
@@ -87,15 +89,10 @@ function AttemptDetail({ attemptId, problems, attempts, onUpdate, onDelete }: At
       <>
         <h1 id="page-title">Edit attempt #{attempt.attemptNumber}</h1>
         <section className="dashboard-card log-panel attempt-edit-panel">
-          <div className="section-heading-row">
-            <div>
-              <p className="section-kicker">{formatProblemTitle(problem)}</p>
-              <h2 className="section-header">Attempt details</h2>
-            </div>
-          </div>
-          <div className="form-section log-panel-fields edit-log-fields">
+          <h2 className="section-header">Attempt details</h2>
+          <div className="form-section log-panel-fields">
             <label className="input-field">
-              <span className="input-description">date</span>
+              <span className="input-description">attempt date</span>
               <input
                 className={`input-card ${invalidFields.has("edit-attempt-date") ? "input-error" : ""}`}
                 aria-invalid={invalidFields.has("edit-attempt-date")}
@@ -130,23 +127,20 @@ function AttemptDetail({ attemptId, problems, attempts, onUpdate, onDelete }: At
                 ))}
               </select>
             </label>
-            <label className="input-field">
-              <span className="input-description">time spent (minutes)</span>
-              <input
-                className={`input-card ${invalidFields.has("edit-attempt-time") ? "input-error" : ""}`}
-                aria-invalid={invalidFields.has("edit-attempt-time")}
-                type="number"
-                min="1"
-                value={draftAttempt.timeSpent}
-                onChange={(event) => {
-                  setDraftAttempt({ ...draftAttempt, timeSpent: Number(event.target.value) })
-                  clearInvalidField("edit-attempt-time")
-                }}
-              />
-            </label>
+            <SliderInput
+              label="time spent"
+              value={draftAttempt.timeSpent}
+              valueLabel={`${draftAttempt.timeSpent} min`}
+              min={1}
+              max={30}
+              onChange={(timeSpent) => {
+                setDraftAttempt({ ...draftAttempt, timeSpent })
+                clearInvalidField("edit-attempt-time")
+              }}
+            />
             {draftAttempt.result && draftAttempt.result !== "independent" && (
               <label className="input-field">
-                <span className="input-description">what went wrong</span>
+                <span className="input-description">mistake type</span>
                 <select
                   className={`input-card ${invalidFields.has("edit-attempt-mistake-type") ? "input-error" : ""}`}
                   aria-invalid={invalidFields.has("edit-attempt-mistake-type")}
@@ -156,39 +150,53 @@ function AttemptDetail({ attemptId, problems, attempts, onUpdate, onDelete }: At
                     clearInvalidField("edit-attempt-mistake-type")
                   }}
                 >
-                  <option value="" disabled>Select what went wrong</option>
+                  <option value="" disabled>Select a mistake type</option>
                   {mistakeTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                    <option key={option.value} value={option.value}>
+                      {option.label}{option.description ? ` — ${option.description}` : ""}
+                    </option>
                   ))}
                 </select>
               </label>
             )}
             <label className="input-field">
-              <span className="input-description">contest status (optional)</span>
+              <span className="input-description">contest rated or unrated?</span>
               <select
-                className="input-card"
+                className={`input-card ${invalidFields.has("edit-attempt-contest-status") ? "input-error" : ""}`}
+                aria-invalid={invalidFields.has("edit-attempt-contest-status")}
                 value={draftAttempt.contestStatus}
                 onChange={(event) => {
                   setDraftAttempt({ ...draftAttempt, contestStatus: event.target.value })
+                  clearInvalidField("edit-attempt-contest-status")
                 }}
               >
-                <option value="">Not recorded</option>
+                <option value="" disabled>Select rated or unrated</option>
                 {contestStatusOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
             </label>
-            <label className="input-field wide-field">
+            <label className="input-field">
               <span className="input-description">what I learned</span>
-              <textarea className="input-card" value={draftAttempt.keyIdea} onChange={(event) => {
-                setDraftAttempt({ ...draftAttempt, keyIdea: event.target.value })
-              }} />
+              <textarea
+                className="input-card"
+                placeholder="A short phrase or sentence you want to remember"
+                value={draftAttempt.keyIdea}
+                onChange={(event) => {
+                  setDraftAttempt({ ...draftAttempt, keyIdea: event.target.value })
+                }}
+              />
             </label>
-            <label className="input-field wide-field">
+            <label className="input-field">
               <span className="input-description">recognition clue</span>
-              <textarea className="input-card" value={draftAttempt.recognitionClue} onChange={(event) => {
-                setDraftAttempt({ ...draftAttempt, recognitionClue: event.target.value })
-              }} />
+              <textarea
+                className="input-card"
+                placeholder="What should help you recognize this approach next time?"
+                value={draftAttempt.recognitionClue}
+                onChange={(event) => {
+                  setDraftAttempt({ ...draftAttempt, recognitionClue: event.target.value })
+                }}
+              />
             </label>
           </div>
         </section>
