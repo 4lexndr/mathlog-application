@@ -66,7 +66,6 @@ function Settings({ settings, onSave }: SettingsProps) {
                   />
                   <span className="theme-swatch" aria-hidden="true"><i /><i /><i /></span>
                   <strong>{option.label}</strong>
-                  {option.value === "pro" && <small>Black &amp; white only</small>}
                 </label>
               ))}
             </div>

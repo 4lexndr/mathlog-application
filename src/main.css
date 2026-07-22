@@ -143,42 +143,6 @@
   color-scheme: dark;
 }
 
-:root[data-theme="pro"] {
-  --page-bg: #000;
-  --page-glow: transparent;
-  --text: #fff;
-  --text-soft: #fff;
-  --heading: #fff;
-  --muted: #fff;
-  --accent: #fff;
-  --accent-strong: #fff;
-  --accent-soft: #fff;
-  --accent-softer: #000;
-  --button-hover: #000;
-  --button-text: #000;
-  --button-hover-text: #fff;
-  --surface: #000;
-  --surface-subtle: #000;
-  --surface-solid: #000;
-  --surface-hover: #000;
-  --surface-muted: #000;
-  --border: #fff;
-  --border-strong: #fff;
-  --shadow: transparent;
-  --shadow-strong: transparent;
-  --danger: #fff;
-  --danger-hover: #000;
-  --danger-soft: #000;
-  --danger-text: #fff;
-  --danger-button-text: #000;
-  --danger-hover-text: #fff;
-  --warning: #fff;
-  --warning-strong: #fff;
-  --warning-soft: #000;
-  --focus-ring: 3px solid #fff;
-  color-scheme: dark;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -875,7 +839,7 @@ button {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), var(--accent));
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
   transition: width 220ms ease;
 }
 
@@ -1325,7 +1289,7 @@ textarea.input-card {
 
 .theme-options {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1404,13 +1368,6 @@ textarea.input-card {
 .theme-option-sage { --swatch-a: #566d40; --swatch-b: #cbd7ad; --swatch-c: #f3f6ed; }
 .theme-option-sky-blue { --swatch-a: #347895; --swatch-b: #b9ddeb; --swatch-c: #eef7fb; }
 .theme-option-dark { --swatch-a: #171614; --swatch-b: #d1a65d; --swatch-c: #ece7dd; }
-.theme-option-pro { --swatch-a: #000; --swatch-b: #fff; --swatch-c: #000; }
-
-:root[data-theme="pro"] .theme-option {
-  --swatch-a: #000;
-  --swatch-b: #fff;
-  --swatch-c: #000;
-}
 
 .settings-card > .form-section {
   padding-top: 24px;

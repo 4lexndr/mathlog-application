@@ -130,4 +130,10 @@ test("the preferred color theme persists with a safe cream fallback", () => {
 
   storage.setItem("settings", JSON.stringify({ colorTheme: "ultraviolet" }))
   assert.equal(loadSettings().colorTheme, "cream")
+
+  storage.setItem("settings", JSON.stringify({ colorTheme: "dark" }))
+  assert.equal(loadSettings().colorTheme, "dark")
+
+  storage.setItem("settings", JSON.stringify({ colorTheme: "pro" }))
+  assert.equal(loadSettings().colorTheme, "cream")
 })

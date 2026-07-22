@@ -223,7 +223,6 @@ function Dashboard({ problems, attempts }: DashboardProps) {
               const percentage = categorizedProblems === 0
                 ? 0
                 : (subject.value / categorizedProblems) * 100
-              const barColor = `hsl(38 65% ${78 - percentage * 0.35}%)`
 
               return (
                 <div
@@ -239,7 +238,7 @@ function Dashboard({ problems, attempts }: DashboardProps) {
                   <div className="subject-bar-track" aria-hidden="true">
                     <span
                       className="subject-bar-fill"
-                      style={{ width: `${percentage}%`, background: barColor }}
+                      style={{ width: `${percentage}%` }}
                     />
                   </div>
                 </div>

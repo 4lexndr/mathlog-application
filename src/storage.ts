@@ -31,7 +31,7 @@ export interface AppSettings {
   colorTheme: ColorTheme
 }
 
-export type ColorTheme = "crimson" | "cream" | "sage" | "sky-blue" | "dark" | "pro"
+export type ColorTheme = "crimson" | "cream" | "sage" | "sky-blue" | "dark"
 
 export const colorThemeOptions: ReadonlyArray<{ value: ColorTheme; label: string }> = [
   { value: "crimson", label: "Crimson" },
@@ -39,7 +39,6 @@ export const colorThemeOptions: ReadonlyArray<{ value: ColorTheme; label: string
   { value: "sage", label: "Sage" },
   { value: "sky-blue", label: "Sky blue" },
   { value: "dark", label: "Dark" },
-  { value: "pro", label: "Pro" },
 ]
 
 export interface LogPreferences {
