@@ -6,7 +6,7 @@ const navigationItems = [
   { href: "#dashboard", label: "Dashboard" },
   { href: "#queue", label: "Queue" },
   { href: "#journal", label: "Journal" },
-  { href: "#history", label: "History" },
+  { href: "#history", label: "Problem History" },
   { href: "#settings", label: "Settings" },
 ]
 

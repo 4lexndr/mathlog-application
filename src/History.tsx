@@ -2,32 +2,16 @@ import { useMemo, useState } from "react"
 import type { Attempt, Contest, Problem } from "./types.ts"
 import { resultOptions } from "./types.ts"
 import {
-  formatDate,
   formatContestTitle,
+  formatDate,
   formatProblemTitle,
   labelForOption,
-  problemIdentityKey,
 } from "./storage.ts"
 
 interface HistoryProps {
   problems: Problem[]
   attempts: Attempt[]
   contests: Contest[]
-  onRemoveDuplicates: () => void
-}
-
-interface ContestHistoryCardProps {
-  contests: Contest[]
-  isSearching: boolean
-}
-
-interface HistoryCardProps {
-  headingId: string
-  title: string
-  emptyTitle: string
-  emptyDescription: string
-  attempts: Attempt[]
-  problemById: ReadonlyMap<string, Problem>
 }
 
 const HISTORY_LIMIT = 50
@@ -36,253 +20,144 @@ function normalizeSearchValue(value: string): string {
   return value.trim().toLocaleLowerCase()
 }
 
-function HistoryCard({
-  headingId,
-  title,
-  emptyTitle,
-  emptyDescription,
-  attempts,
-  problemById,
-}: HistoryCardProps) {
-  return (
-    <section className="dashboard-card" aria-labelledby={headingId}>
-      <div className="section-heading-row">
-        <div>
-          <p className="section-kicker">Newest first</p>
-          <h2 id={headingId} className="section-header">{title}</h2>
-        </div>
-        <span
-          className="count-badge"
-          aria-label={`${attempts.length} ${attempts.length === 1 ? "attempt" : "attempts"} shown`}
-        >
-          {attempts.length}
-        </span>
-      </div>
-
-      {attempts.length === 0 ? (
-        <div className="empty-state">
-          <h3>{emptyTitle}</h3>
-          <p>{emptyDescription}</p>
-        </div>
-      ) : (
-        <div
-          className="problem-list scroll-list history-problem-list"
-          role="region"
-          aria-labelledby={headingId}
-          tabIndex={0}
-        >
-          {attempts.map((attempt) => {
-            const problem = problemById.get(attempt.problemId)
-            const result = labelForOption(resultOptions, attempt.result)
-
-            return (
-              <button
-                key={attempt.id}
-                className="problem-card problem-card-button"
-                type="button"
-                onClick={() => {
-                  window.location.hash = encodeURIComponent(attempt.id)
-                }}
-              >
-                <div className="problem-card-copy">
-                  <h3>{problem ? formatProblemTitle(problem) : "Unknown problem"}</h3>
-                  <div className="problem-meta">
-                    <span>{formatDate(attempt.date, { dateStyle: "medium" })}</span>
-                    <span>{result}</span>
-                  </div>
-                </div>
-                <span className="history-arrow" aria-hidden="true">›</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function ContestHistoryCard({ contests, isSearching }: ContestHistoryCardProps) {
-  return (
-    <section className="dashboard-card contest-history-card" aria-labelledby="contest-history-heading">
-      <div className="section-heading-row">
-        <div>
-          <p className="section-kicker">Newest first</p>
-          <h2 id="contest-history-heading" className="section-header">Contest logs</h2>
-        </div>
-        <span
-          className="count-badge"
-          aria-label={`${contests.length} ${contests.length === 1 ? "contest" : "contests"} shown`}
-        >
-          {contests.length}
-        </span>
-      </div>
-
-      {contests.length === 0 ? (
-        <div className="empty-state contest-history-empty">
-          <h3>{isSearching ? "No matching contests" : "No contest logs yet"}</h3>
-          <p>{isSearching
-            ? "Try another year, contest, or subcontest."
-            : "Complete contest logs will appear here, with the most recent first."}</p>
-        </div>
-      ) : (
-        <div
-          className="contest-history-list scroll-list"
-          role="region"
-          aria-labelledby="contest-history-heading"
-          tabIndex={0}
-        >
-          {contests.map((contest) => (
-            <button
-              key={contest.id}
-              className="contest-history-row"
-              type="button"
-              onClick={() => {
-                window.location.hash = `contest-${encodeURIComponent(contest.id)}`
-              }}
-            >
-              <strong>{formatContestTitle(contest)}</strong>
-              <span>{formatDate(contest.date, { dateStyle: "medium" })}</span>
-              <span className="contest-history-score">Score: {contest.score}</span>
-              <span className="history-arrow" aria-hidden="true">›</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function History({ problems, attempts, contests, onRemoveDuplicates }: HistoryProps) {
+function History({ problems, attempts, contests }: HistoryProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const { problemById, searchTextByProblemId } = useMemo(() => {
-    const nextProblemById = new Map<string, Problem>()
-    const nextSearchTextByProblemId = new Map<string, string>()
-
-    for (const problem of problems) {
-      nextProblemById.set(problem.id, problem)
-      nextSearchTextByProblemId.set(problem.id, normalizeSearchValue([
+  const searchTerms = useMemo(() => {
+    const normalized = normalizeSearchValue(searchQuery)
+    return normalized ? normalized.split(/\s+/) : []
+  }, [searchQuery])
+  const attemptsByProblemId = useMemo(() => {
+    const grouped = new Map<string, Attempt[]>()
+    for (const attempt of attempts) {
+      const group = grouped.get(attempt.problemId) ?? []
+      group.push(attempt)
+      grouped.set(attempt.problemId, group)
+    }
+    for (const group of grouped.values()) {
+      group.sort((first, second) => second.attemptNumber - first.attemptNumber)
+    }
+    return grouped
+  }, [attempts])
+  const visibleProblems = useMemo(() => problems
+    .filter((problem) => {
+      const searchText = normalizeSearchValue([
         problem.year,
         problem.contest,
         problem.subcontest,
         problem.problemNumber,
-      ].join(" ")))
-    }
-
-    return {
-      problemById: nextProblemById,
-      searchTextByProblemId: nextSearchTextByProblemId,
-    }
-  }, [problems])
-  const newestFirst = useMemo(() => [...attempts].sort((first, second) => {
-    const dateOrder = second.date.localeCompare(first.date)
-    return dateOrder || second.id.localeCompare(first.id)
-  }), [attempts])
-  const newestContestsFirst = useMemo(() => [...contests].sort((first, second) => {
-    const dateOrder = second.date.localeCompare(first.date)
-    return dateOrder || second.id.localeCompare(first.id)
-  }), [contests])
-  const searchTerms = useMemo(() => {
-    const normalizedQuery = normalizeSearchValue(searchQuery)
-    return normalizedQuery ? normalizedQuery.split(/\s+/) : []
-  }, [searchQuery])
-  const { initialAttempts, reviewAttempts } = useMemo(() => {
-    const nextInitialAttempts: Attempt[] = []
-    const nextReviewAttempts: Attempt[] = []
-
-    for (const attempt of newestFirst) {
-      const searchText = searchTextByProblemId.get(attempt.problemId) ?? ""
-      if (searchTerms.some((term) => !searchText.includes(term))) continue
-
-      const targetAttempts = attempt.isReview ? nextReviewAttempts : nextInitialAttempts
-      if (targetAttempts.length < HISTORY_LIMIT) targetAttempts.push(attempt)
-
-      if (
-        nextInitialAttempts.length === HISTORY_LIMIT
-        && nextReviewAttempts.length === HISTORY_LIMIT
-      ) break
-    }
-
-    return {
-      initialAttempts: nextInitialAttempts,
-      reviewAttempts: nextReviewAttempts,
-    }
-  }, [newestFirst, searchTerms, searchTextByProblemId])
-  const visibleContests = useMemo(() => newestContestsFirst.filter((contest) => {
-    const searchText = normalizeSearchValue([
-      contest.year,
-      contest.contest,
-      contest.subcontest,
-    ].join(" "))
-    return searchTerms.every((term) => searchText.includes(term))
-  }).slice(0, HISTORY_LIMIT), [newestContestsFirst, searchTerms])
-  const hasDuplicateProblems = useMemo(() => {
-    const seenIdentities = new Set<string>()
-
-    for (const problem of problems) {
-      const identity = problemIdentityKey(problem)
-      if (seenIdentities.has(identity)) return true
-      seenIdentities.add(identity)
-    }
-
-    return false
-  }, [problems])
+        problem.subject,
+      ].join(" "))
+      return searchTerms.every((term) => searchText.includes(term))
+    })
+    .sort((first, second) => {
+      const firstLatest = attemptsByProblemId.get(first.id)?.[0]
+      const secondLatest = attemptsByProblemId.get(second.id)?.[0]
+      return (secondLatest?.date ?? "").localeCompare(firstLatest?.date ?? "")
+        || formatProblemTitle(first).localeCompare(formatProblemTitle(second))
+    })
+    .slice(0, HISTORY_LIMIT), [attemptsByProblemId, problems, searchTerms])
+  const visibleContests = useMemo(() => contests
+    .filter((contest) => {
+      const searchText = normalizeSearchValue([
+        contest.year,
+        contest.contest,
+        contest.subcontest,
+      ].join(" "))
+      return searchTerms.every((term) => searchText.includes(term))
+    })
+    .sort((first, second) => (
+      second.date.localeCompare(first.date) || second.id.localeCompare(first.id)
+    ))
+    .slice(0, HISTORY_LIMIT), [contests, searchTerms])
   const isSearching = searchTerms.length > 0
 
   return (
     <>
-      <h1 id="page-title">Log history</h1>
-
-      <search className="history-search" aria-label="Search log history">
-        <label htmlFor="history-search-input" className="input-description">
-          Search logs
-        </label>
+      <h1 id="page-title">Problem history</h1>
+      <search className="history-search" aria-label="Search problem history">
+        <label htmlFor="history-search-input" className="input-description">Search history</label>
         <input
           id="history-search-input"
           className="input-card"
           type="search"
-          placeholder="Year, contest, subcontest, or problem number"
+          placeholder="Year, contest, subcontest, problem number, or subject"
           value={searchQuery}
-          onChange={(event) => {
-            setSearchQuery(event.target.value)
-          }}
+          onChange={(event) => { setSearchQuery(event.target.value) }}
         />
       </search>
 
-      <div className="history-layout">
-        <div className="history-card-column">
-          <HistoryCard
-            headingId="history-heading"
-            title="Previous attempts"
-            emptyTitle={isSearching ? "No matching attempts" : "No attempts yet"}
-            emptyDescription={isSearching
-              ? "Try another year, contest, subcontest, or problem number."
-              : "Completed logs will appear here, with the most recent attempt first."}
-            attempts={initialAttempts}
-            problemById={problemById}
-          />
-          {hasDuplicateProblems && (
-            <button
-              className="history-duplicates-link"
-              type="button"
-              onClick={onRemoveDuplicates}
-            >
-              Review duplicates?
-            </button>
-          )}
+      <section className="dashboard-card problem-history-card" aria-labelledby="problem-history-heading">
+        <div className="section-heading-row">
+          <div>
+            <p className="section-kicker">Most recently attempted</p>
+            <h2 id="problem-history-heading" className="section-header">Problems</h2>
+          </div>
+          <span className="count-badge" aria-label={`${visibleProblems.length} problems shown`}>
+            {visibleProblems.length}
+          </span>
         </div>
-        <HistoryCard
-          headingId="review-history-heading"
-          title="Reviews"
-          emptyTitle={isSearching ? "No matching reviews" : "No reviews yet"}
-          emptyDescription={isSearching
-            ? "Try another year, contest, subcontest, or problem number."
-            : "Completed review logs will appear here."}
-          attempts={reviewAttempts}
-          problemById={problemById}
-        />
-      </div>
+        {visibleProblems.length === 0 ? (
+          <div className="empty-state">
+            <h3>{isSearching ? "No matching problems" : "No problems yet"}</h3>
+            <p>{isSearching
+              ? "Try another year, contest, subcontest, problem number, or subject."
+              : "Attempted problems will appear here."}</p>
+          </div>
+        ) : (
+          <div className="problem-history-list" role="region" aria-labelledby="problem-history-heading">
+            {visibleProblems.map((problem) => {
+              const latestAttempt = attemptsByProblemId.get(problem.id)?.[0]
+              return (
+                <button key={problem.id} type="button" onClick={() => {
+                  window.location.hash = `problem-${encodeURIComponent(problem.id)}`
+                }}>
+                  <div>
+                    <h3>{formatProblemTitle(problem)}</h3>
+                    <span>{problem.numAttempts} {problem.numAttempts === 1 ? "attempt" : "attempts"}</span>
+                  </div>
+                  <span>{latestAttempt
+                    ? formatDate(latestAttempt.date, { dateStyle: "medium" })
+                    : "No attempt date"}</span>
+                  <span>{latestAttempt ? labelForOption(resultOptions, latestAttempt.result) : "No result"}</span>
+                  <span>Review {formatDate(problem.reviewDate, { dateStyle: "medium" })}</span>
+                  <span className="history-arrow" aria-hidden="true">›</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </section>
 
-      <ContestHistoryCard contests={visibleContests} isSearching={isSearching} />
+      <section className="dashboard-card contest-history-card" aria-labelledby="contest-history-heading">
+        <div className="section-heading-row">
+          <div>
+            <p className="section-kicker">Newest first</p>
+            <h2 id="contest-history-heading" className="section-header">Contest logs</h2>
+          </div>
+          <span className="count-badge" aria-label={`${visibleContests.length} contests shown`}>
+            {visibleContests.length}
+          </span>
+        </div>
+        {visibleContests.length === 0 ? (
+          <div className="empty-state contest-history-empty">
+            <h3>{isSearching ? "No matching contests" : "No contest logs yet"}</h3>
+            <p>{isSearching ? "Try another search." : "Completed contest logs will appear here."}</p>
+          </div>
+        ) : (
+          <div className="contest-history-list" role="region" aria-labelledby="contest-history-heading">
+            {visibleContests.map((contest) => (
+              <button key={contest.id} className="contest-history-row" type="button" onClick={() => {
+                window.location.hash = `contest-${encodeURIComponent(contest.id)}`
+              }}>
+                <strong>{formatContestTitle(contest)}</strong>
+                <span>{formatDate(contest.date, { dateStyle: "medium" })}</span>
+                <span className="contest-history-score">Score: {contest.score}</span>
+                <span className="history-arrow" aria-hidden="true">›</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
     </>
   )
 }

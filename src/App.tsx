@@ -5,11 +5,12 @@ import Dashboard from "./Dashboard"
 import Footer from "./Footer"
 import History from "./History"
 import Journal from "./Journal"
+import ProblemDetail from "./ProblemDetail"
 import Queue from "./Queue"
 import ReviewLog from "./ReviewLog"
 import Settings from "./Settings"
 import HeaderBar from "./Header"
-import type { Problem, Attempt, Contest } from "./types.ts"
+import type { Problem, Attempt, AttemptDraft, Contest } from "./types.ts"
 import {
   contestStatusOptions,
   mistakeTypeOptions,
@@ -19,10 +20,9 @@ import {
 import {
   type AppSettings,
   addCalendarDays,
-  loadAttempts,
   loadContests,
   loadPreferences,
-  loadProblems,
+  loadProblemData,
   loadSettings,
   localDateKey,
   problemIdentityKey,
@@ -30,6 +30,7 @@ import {
   savePreferences,
   saveSettings,
 } from "./storage.ts"
+import { appendAttempt, applyAttemptUpdate, removeAttempt } from "./problemAttempts.ts"
 import { getNextReviewDate } from "./reviewSchedule.ts"
 import "./main.css"
 
@@ -42,6 +43,7 @@ type Route =
   | { "page": "log" }
   | { "page": "contest"; contestId: string }
   | { "page": "review-log"; problemId: string }
+  | { "page": "problem"; problemId: string }
   | { "page": "attempt"; attemptId: string }
 
 type SliderInputProps = {
@@ -125,6 +127,20 @@ function getRoute(): Route {
     }
   }
 
+  if (hash.startsWith("problem-")) {
+    return {
+      page: "problem",
+      problemId: decodeURIComponent(hash.slice("problem-".length)),
+    }
+  }
+
+  if (hash.startsWith("attempt-")) {
+    return {
+      page: "attempt",
+      attemptId: decodeURIComponent(hash.slice("attempt-".length)),
+    }
+  }
+
   return {
     page: "attempt",
     attemptId: decodeURIComponent(hash),
@@ -166,8 +182,9 @@ function App() {
   const [invalidFields, setInvalidFields] = useState<Set<string>>(() => new Set())
 
   // Lazy initializers read local storage only during the first render.
-  const [problems, setProblems] = useState<Problem[]>(loadProblems)
-  const [attempts, setAttempts] = useState<Attempt[]>(loadAttempts)
+  const [initialProblemData] = useState(loadProblemData)
+  const [problems, setProblems] = useState<Problem[]>(initialProblemData.problems)
+  const [attempts, setAttempts] = useState<Attempt[]>(initialProblemData.attempts)
   const [contests, setContests] = useState<Contest[]>(loadContests)
   const duplicateProblemExists = useMemo(() => {
     if (!year.trim() || !contest.trim() || !problemNumber.trim()) return false
@@ -189,8 +206,9 @@ function App() {
 
   // Persist the app's three log collections from one effect.
   useEffect(() => {
+    if (!initialProblemData.canPersist) return
     saveData(problems, attempts, contests)
-  }, [problems, attempts, contests])
+  }, [attempts, contests, initialProblemData.canPersist, problems])
 
   // Reapply the last successful log's choices whenever the log page opens.
   useEffect(() => {
@@ -210,22 +228,35 @@ function App() {
     setContestStatus(nextSettings.defaultContestStatus)
   }
 
-  function saveReviewAttempt(attempt: Attempt) {
-    const nextReviewDate = getNextReviewDate(attempt.date, attempt.result)
+  function saveReviewAttempt(problemId: string, draft: AttemptDraft) {
+    const problem = problems.find((item) => item.id === problemId)
+    if (!problem) return
+
+    const next = appendAttempt(problem, draft, crypto.randomUUID())
 
     setProblems((previous) => previous.map((problem) => (
-      problem.id === attempt.problemId
-        ? { ...problem, reviewDate: nextReviewDate }
+      problem.id === problemId
+        ? next.problem
         : problem
     )))
-    setAttempts((previous) => [...previous, attempt])
+    setAttempts((previous) => [...previous, next.attempt])
     window.location.hash = "dashboard"
   }
 
-  function updateAttemptLog(updatedProblem: Problem, updatedAttempt: Attempt) {
+  function updateProblem(updatedProblem: Problem) {
     setProblems((previous) => previous.map((problem) => (
       problem.id === updatedProblem.id ? updatedProblem : problem
     )))
+  }
+
+  function updateAttemptLog(updatedAttempt: Attempt) {
+    const problem = problems.find((item) => item.id === updatedAttempt.problemId)
+    if (problem) {
+      const updatedProblem = applyAttemptUpdate(problem, updatedAttempt)
+      setProblems((previous) => previous.map((item) => (
+        item.id === problem.id ? updatedProblem : item
+      )))
+    }
     setAttempts((previous) => previous.map((attempt) => (
       attempt.id === updatedAttempt.id ? updatedAttempt : attempt
     )))
@@ -235,13 +266,26 @@ function App() {
     const deletedAttempt = attempts.find((attempt) => attempt.id === attemptId)
     if (!deletedAttempt) return
 
-    setAttempts((previous) => previous.filter((attempt) => attempt.id !== attemptId))
-    if (!attempts.some((attempt) => (
-      attempt.id !== attemptId && attempt.problemId === deletedAttempt.problemId
-    ))) {
+    const problem = problems.find((item) => item.id === deletedAttempt.problemId)
+    if (!problem) return
+    const deletion = removeAttempt(
+      problem,
+      attempts.filter((attempt) => attempt.problemId === deletedAttempt.problemId),
+      attemptId,
+    )
+    setAttempts((previous) => [
+      ...previous.filter((attempt) => attempt.problemId !== deletedAttempt.problemId),
+      ...deletion.attempts,
+    ])
+    if (!deletion.problem) {
       setProblems((previous) => previous.filter((problem) => problem.id !== deletedAttempt.problemId))
+      window.location.hash = "history"
+      return
     }
-    window.location.hash = "history"
+    setProblems((previous) => previous.map((problem) => (
+      problem.id === deletedAttempt.problemId ? deletion.problem! : problem
+    )))
+    window.location.hash = `problem-${encodeURIComponent(deletedAttempt.problemId)}`
   }
 
   function updateContestLog(updatedContest: Contest) {
@@ -253,38 +297,6 @@ function App() {
   function deleteContestLog(contestId: string) {
     setContests((previous) => previous.filter((contest) => contest.id !== contestId))
     window.location.hash = "history"
-  }
-
-  function removeDuplicateProblemLogs() {
-    const canonicalProblemIdByIdentity = new Map<string, string>()
-    const canonicalProblemIdByDuplicateId = new Map<string, string>()
-
-    for (const problem of problems) {
-      const identity = problemIdentityKey(problem)
-      const canonicalProblemId = canonicalProblemIdByIdentity.get(identity)
-
-      if (canonicalProblemId) {
-        canonicalProblemIdByDuplicateId.set(problem.id, canonicalProblemId)
-      } else {
-        canonicalProblemIdByIdentity.set(identity, problem.id)
-      }
-    }
-
-    if (canonicalProblemIdByDuplicateId.size === 0) return
-    if (!window.confirm(
-      "Remove duplicate problem logs? Later duplicate attempts will be permanently deleted. Reviews will be preserved.",
-    )) return
-
-    setProblems((previous) => previous.filter((problem) => (
-      !canonicalProblemIdByDuplicateId.has(problem.id)
-    )))
-    setAttempts((previous) => previous.flatMap((attempt) => {
-      const canonicalProblemId = canonicalProblemIdByDuplicateId.get(attempt.problemId)
-      if (!canonicalProblemId) return [attempt]
-
-      // Duplicate initial logs are removed; reviews remain useful on the retained problem.
-      return attempt.isReview ? [{ ...attempt, problemId: canonicalProblemId }] : []
-    }))
   }
 
   function snoozeProblems(problemIds: string[]) {
@@ -399,8 +411,19 @@ function App() {
     }
 
     const savedMistakeType = result === "independent" ? "" : mistakeType
-    const savedProblem: Problem = {
-      id: crypto.randomUUID(),
+    const existingProblem = problems.find((problem) => (
+      problemIdentityKey(problem) === problemIdentityKey({
+        year,
+        contest,
+        subcontest,
+        problemNumber,
+      })
+    ))
+    const problemId = existingProblem?.id ?? crypto.randomUUID()
+    const attemptNumber = (existingProblem?.numAttempts ?? 0) + 1
+    const nextReviewDate = getNextReviewDate(attemptDate, result)
+    const savedProblem: Problem = existingProblem ?? {
+      id: problemId,
       year: year.trim(),
       contest: contest.trim().toUpperCase(),
       subcontest: subcontest.trim(),
@@ -408,14 +431,15 @@ function App() {
       url: url.trim(),
       rating,
       subject,
-      reviewDate: getNextReviewDate(attemptDate, result),
+      reviewDate: nextReviewDate,
+      numAttempts: 0,
     }
 
     const newAttempt: Attempt = {
       id: crypto.randomUUID(),
-      problemId: savedProblem.id,
+      problemId,
       date: attemptDate,
-      isReview: false,
+      attemptNumber,
       result,
       timeSpent,
       mistakeType: savedMistakeType,
@@ -425,7 +449,11 @@ function App() {
     }
 
     savePreferences({ rating, subject, contestStatus })
-    setProblems((previous) => [...previous, savedProblem])
+    setProblems((previous) => existingProblem
+      ? previous.map((problem) => problem.id === existingProblem.id
+        ? { ...problem, reviewDate: nextReviewDate, numAttempts: attemptNumber }
+        : problem)
+      : [...previous, { ...savedProblem, reviewDate: nextReviewDate, numAttempts: 1 }])
     setAttempts((previous) => [...previous, newAttempt])
     resetLogForm()
     window.location.hash = "dashboard"
@@ -465,6 +493,11 @@ function App() {
     <main id="app">
       <HeaderBar resetLogForm={resetLogForm}/>
       <div className="page-content">
+        {!initialProblemData.canPersist && (
+          <p className="storage-error" role="alert">
+            Saved problem data could not be migrated safely. The original local data was left unchanged.
+          </p>
+        )}
         {route.page === "log" ? (
         <>
           <h1 id="page-title">Create a new log</h1>
@@ -574,7 +607,7 @@ function App() {
                     />
                     {duplicateProblemExists && (
                       <span id="duplicate-problem-hint" className="duplicate-problem-hint" role="status">
-                        This problem has already been logged.
+                        This will be added as another attempt on the existing problem.
                       </span>
                     )}
                   </label>
@@ -847,16 +880,23 @@ function App() {
           attemptId={route.attemptId}
           problems={problems}
           attempts={attempts}
-          onSnooze={(problemId) => snoozeProblems([problemId])}
           onUpdate={updateAttemptLog}
           onDelete={deleteAttemptLog}
+        />
+      ) : route.page === "problem" ? (
+        <ProblemDetail
+          key={route.problemId}
+          problemId={route.problemId}
+          problems={problems}
+          attempts={attempts}
+          onSnooze={(problemId) => snoozeProblems([problemId])}
+          onUpdate={updateProblem}
         />
       ) : route.page === "review-log" ? (
         <ReviewLog
           key={route.problemId}
           problemId={route.problemId}
           problems={problems}
-          attempts={attempts}
           onSave={saveReviewAttempt}
         />
       ) : route.page === "history" ? (
@@ -864,12 +904,11 @@ function App() {
           problems={problems}
           attempts={attempts}
           contests={contests}
-          onRemoveDuplicates={removeDuplicateProblemLogs}
         />
       ) : route.page === "journal" ? (
         <Journal problems={problems} attempts={attempts} />
       ) : route.page === "queue" ? (
-        <Queue problems={problems} attempts={attempts} onSnoozeAll={moveProblemsToTomorrow} />
+        <Queue problems={problems} onSnoozeAll={moveProblemsToTomorrow} />
       ) : route.page === "settings" ? (
         <Settings settings={settings} onSave={handleSaveSettings} />
       ) : (

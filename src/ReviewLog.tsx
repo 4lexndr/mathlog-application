@@ -1,27 +1,26 @@
 import { useState } from "react"
-import type { Attempt, Problem } from "./types.ts"
-import { resultOptions, subjectOptions } from "./types.ts"
+import type { AttemptDraft, Problem } from "./types.ts"
+import { mistakeTypeOptions, resultOptions, subjectOptions } from "./types.ts"
 import { formatProblemTitle, labelForOption, localDateKey } from "./storage.ts"
 
 interface ReviewLogProps {
   problemId: string
   problems: Problem[]
-  attempts: Attempt[]
-  onSave: (attempt: Attempt) => void
+  onSave: (problemId: string, attempt: AttemptDraft) => void
 }
 
 const DEFAULT_TIME_SPENT = 15
 
-function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
+function ReviewLog({ problemId, problems, onSave }: ReviewLogProps) {
   const [reviewDate, setReviewDate] = useState(() => localDateKey())
   const [result, setResult] = useState("")
+  const [mistakeType, setMistakeType] = useState("")
   const [timeSpent, setTimeSpent] = useState(DEFAULT_TIME_SPENT)
   const [error, setError] = useState("")
   const [invalidFields, setInvalidFields] = useState<Set<string>>(() => new Set())
   const problem = problems.find((item) => item.id === problemId)
-  const originalAttempt = attempts.find((item) => item.problemId === problemId)
 
-  if (!problem || !originalAttempt) {
+  if (!problem) {
     return (
       <>
         <h1 id="page-title">Review not found</h1>
@@ -33,12 +32,14 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
   }
 
   const savedProblemId = problem.id
-  const savedContestStatus = originalAttempt.contestStatus
 
   function saveReview() {
     const nextInvalidFields = new Set<string>()
     if (!reviewDate) nextInvalidFields.add("review-date")
     if (!result) nextInvalidFields.add("review-result")
+    if (result && result !== "independent" && !mistakeType) {
+      nextInvalidFields.add("review-mistake-type")
+    }
 
     if (nextInvalidFields.size > 0) {
       setInvalidFields(nextInvalidFields)
@@ -46,17 +47,14 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
       return
     }
 
-    onSave({
-      id: crypto.randomUUID(),
-      problemId: savedProblemId,
+    onSave(savedProblemId, {
       date: reviewDate,
-      isReview: true,
       result,
       timeSpent,
-      mistakeType: "",
+      mistakeType: result === "independent" ? "" : mistakeType,
       keyIdea: "",
       recognitionClue: "",
-      contestStatus: savedContestStatus,
+      contestStatus: "",
     })
   }
 
@@ -132,11 +130,14 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
                 aria-invalid={invalidFields.has("review-result")}
                 value={result}
                 onChange={(event) => {
-                  setResult(event.target.value)
+                  const nextResult = event.target.value
+                  setResult(nextResult)
+                  if (nextResult === "independent") setMistakeType("")
                   setError("")
                   setInvalidFields((previous) => {
                     const next = new Set(previous)
                     next.delete("review-result")
+                    if (nextResult === "independent") next.delete("review-mistake-type")
                     return next
                   })
                 }}
@@ -147,6 +148,31 @@ function ReviewLog({ problemId, problems, attempts, onSave }: ReviewLogProps) {
                 ))}
               </select>
             </label>
+
+            {result && result !== "independent" && (
+              <label className="input-field">
+                <span className="input-description">what went wrong</span>
+                <select
+                  className={`input-card ${invalidFields.has("review-mistake-type") ? "input-error" : ""}`}
+                  aria-invalid={invalidFields.has("review-mistake-type")}
+                  value={mistakeType}
+                  onChange={(event) => {
+                    setMistakeType(event.target.value)
+                    setError("")
+                    setInvalidFields((previous) => {
+                      const next = new Set(previous)
+                      next.delete("review-mistake-type")
+                      return next
+                    })
+                  }}
+                >
+                  <option value="" disabled>Select what went wrong</option>
+                  {mistakeTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <div className="slider-input">
               <div className="slider-input-header">

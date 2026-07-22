@@ -10,6 +10,7 @@ export interface Problem {
   subject: string,
   screenshot?: string,
   reviewDate: string,
+  numAttempts: number,
 }
 
 // An attempt records one practice session.
@@ -17,7 +18,7 @@ export interface Attempt {
   id: string,
   problemId: string,
   date: string,
-  isReview: boolean,
+  attemptNumber: number,
   result: string,
   timeSpent: number,
   mistakeType: string,
@@ -25,6 +26,8 @@ export interface Attempt {
   recognitionClue: string,
   contestStatus: string,
 }
+
+export type AttemptDraft = Omit<Attempt, "id" | "problemId" | "attemptNumber">
 
 // A contest log records one complete contest result independently of problem attempts.
 export interface Contest {

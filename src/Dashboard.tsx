@@ -35,7 +35,7 @@ function Dashboard({ problems, attempts }: DashboardProps) {
   const dueProblems = problems.filter((problem) => problem.reviewDate <= todayKey)
   const dueProblemIds = new Set(dueProblems.map((problem) => problem.id))
   const estimatedReviewMinutes = attempts
-    .filter((attempt) => !attempt.isReview && dueProblemIds.has(attempt.problemId))
+    .filter((attempt) => attempt.attemptNumber === 1 && dueProblemIds.has(attempt.problemId))
     .reduce((total, attempt) => total + attempt.timeSpent, 0)
   const averageDueRating = dueProblems.length === 0
     ? null

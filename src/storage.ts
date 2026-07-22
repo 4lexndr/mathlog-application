@@ -1,14 +1,27 @@
 import type { Attempt, Contest, Problem } from "./types.ts"
+import { normalizeProblemData } from "./dataModel.ts"
 
 const PROBLEMS_KEY = "problems"
 const ATTEMPTS_KEY = "attempts"
 const CONTESTS_KEY = "contests"
 const SETTINGS_KEY = "settings"
 const PREFERENCES_KEY = "preferences"
+const PROBLEMS_BACKUP_KEY = "problems-backup-before-attempt-number-v1"
+const ATTEMPTS_BACKUP_KEY = "attempts-backup-before-attempt-number-v1"
 
-type StoredAttempt = Omit<Attempt, "contestStatus"> & {
+type StoredAttempt = Omit<Attempt, "contestStatus" | "attemptNumber"> & {
   contestStatus?: string
+  attemptNumber?: number
+  isReview?: boolean
   pressureLevel?: string
+}
+
+type StoredProblem = Omit<Problem, "numAttempts"> & { numAttempts?: number }
+
+export interface ProblemData {
+  problems: Problem[]
+  attempts: Attempt[]
+  canPersist: boolean
 }
 
 export interface AppSettings {
@@ -69,22 +82,53 @@ export function formatDate(
   return new Intl.DateTimeFormat(undefined, options).format(date)
 }
 
-// Load the saved problems when App creates its initial state.
-export function loadProblems(): Problem[] {
-  return loadArray<Problem>(PROBLEMS_KEY)
-}
-
-// Load the saved attempts when App creates its initial state.
-export function loadAttempts(): Attempt[] {
-  return loadArray<StoredAttempt>(ATTEMPTS_KEY).map((attempt) => {
-    const { pressureLevel, ...currentAttempt } = attempt
-    void pressureLevel
-
-    return {
-      ...currentAttempt,
-      contestStatus: currentAttempt.contestStatus ?? "",
+// Normalize the two related collections together so their IDs, counts, and numbering stay valid.
+export function loadProblemData(): ProblemData {
+  const rawProblems = localStorage.getItem(PROBLEMS_KEY) ?? "[]"
+  const rawAttempts = localStorage.getItem(ATTEMPTS_KEY) ?? "[]"
+  let storedProblems: StoredProblem[]
+  let storedAttempts: StoredAttempt[]
+  try {
+    const parsedProblems: unknown = JSON.parse(rawProblems)
+    const parsedAttempts: unknown = JSON.parse(rawAttempts)
+    if (!Array.isArray(parsedProblems) || !Array.isArray(parsedAttempts)) {
+      return { problems: [], attempts: [], canPersist: false }
     }
-  })
+    storedProblems = parsedProblems as StoredProblem[]
+    storedAttempts = parsedAttempts as StoredAttempt[]
+  } catch {
+    return { problems: [], attempts: [], canPersist: false }
+  }
+
+  let normalized
+  try {
+    normalized = normalizeProblemData(storedProblems, storedAttempts)
+  } catch {
+    return { problems: [], attempts: [], canPersist: false }
+  }
+
+  if (normalized.migrated) {
+    try {
+      if (localStorage.getItem(PROBLEMS_BACKUP_KEY) === null) {
+        localStorage.setItem(PROBLEMS_BACKUP_KEY, rawProblems)
+      }
+      if (localStorage.getItem(ATTEMPTS_BACKUP_KEY) === null) {
+        localStorage.setItem(ATTEMPTS_BACKUP_KEY, rawAttempts)
+      }
+      localStorage.setItem(PROBLEMS_KEY, JSON.stringify(normalized.problems))
+      localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(normalized.attempts))
+    } catch {
+      try {
+        localStorage.setItem(PROBLEMS_KEY, rawProblems)
+        localStorage.setItem(ATTEMPTS_KEY, rawAttempts)
+      } catch {
+        // The original raw values remain the recovery source when storage is unavailable.
+      }
+      return { problems: normalized.problems, attempts: normalized.attempts, canPersist: false }
+    }
+  }
+
+  return { problems: normalized.problems, attempts: normalized.attempts, canPersist: true }
 }
 
 export function loadContests(): Contest[] {
