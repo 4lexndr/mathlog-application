@@ -30,7 +30,7 @@ import {
   savePreferences,
   saveSettings,
 } from "./storage.ts"
-import { getReviewDelayDays } from "./reviewSchedule.ts"
+import { getNextReviewDate } from "./reviewSchedule.ts"
 import "./main.css"
 
 type Route =
@@ -211,6 +211,13 @@ function App() {
   }
 
   function saveReviewAttempt(attempt: Attempt) {
+    const nextReviewDate = getNextReviewDate(attempt.date, attempt.result)
+
+    setProblems((previous) => previous.map((problem) => (
+      problem.id === attempt.problemId
+        ? { ...problem, reviewDate: nextReviewDate }
+        : problem
+    )))
     setAttempts((previous) => [...previous, attempt])
     window.location.hash = "dashboard"
   }
@@ -392,7 +399,6 @@ function App() {
     }
 
     const savedMistakeType = result === "independent" ? "" : mistakeType
-    const reviewDelayDays = getReviewDelayDays(result)
     const savedProblem: Problem = {
       id: crypto.randomUUID(),
       year: year.trim(),
@@ -402,7 +408,7 @@ function App() {
       url: url.trim(),
       rating,
       subject,
-      reviewDate: addCalendarDays(attemptDate, reviewDelayDays),
+      reviewDate: getNextReviewDate(attemptDate, result),
     }
 
     const newAttempt: Attempt = {
