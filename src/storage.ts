@@ -28,7 +28,19 @@ export interface AppSettings {
   defaultSubject: string
   defaultRating: number
   defaultContestStatus: string
+  colorTheme: ColorTheme
 }
+
+export type ColorTheme = "crimson" | "cream" | "sage" | "sky-blue" | "dark" | "pro"
+
+export const colorThemeOptions: ReadonlyArray<{ value: ColorTheme; label: string }> = [
+  { value: "crimson", label: "Crimson" },
+  { value: "cream", label: "Cream" },
+  { value: "sage", label: "Sage" },
+  { value: "sky-blue", label: "Sky blue" },
+  { value: "dark", label: "Dark" },
+  { value: "pro", label: "Pro" },
+]
 
 export interface LogPreferences {
   rating: number
@@ -40,6 +52,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   defaultSubject: "",
   defaultRating: 1600,
   defaultContestStatus: "",
+  colorTheme: "cream",
 }
 
 interface SevenDayPerformance {
@@ -158,6 +171,10 @@ export function loadSettings(): AppSettings {
       ? saved.defaultRating
       : DEFAULT_APP_SETTINGS.defaultRating
     const defaultRating = Math.min(2000, Math.max(1500, Math.round(rawRating / 50) * 50))
+    const savedTheme = saved.colorTheme
+    const colorTheme = colorThemeOptions.some((option) => option.value === savedTheme)
+      ? savedTheme as ColorTheme
+      : DEFAULT_APP_SETTINGS.colorTheme
     return {
       defaultSubject: ["algebra", "combinatorics", "geometry", "number-theory"].includes(
         saved.defaultSubject ?? "",
@@ -169,6 +186,7 @@ export function loadSettings(): AppSettings {
         || saved.defaultContestStatus === "unrated"
         ? saved.defaultContestStatus
         : "",
+      colorTheme,
     }
   } catch {
     return { ...DEFAULT_APP_SETTINGS }

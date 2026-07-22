@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react"
+import { useEffect, useLayoutEffect, useMemo, useState, type KeyboardEvent } from "react"
 import AttemptDetail from "./AttemptDetail"
 import ContestDetail from "./ContestDetail"
 import Dashboard from "./Dashboard"
@@ -219,6 +219,10 @@ function App() {
     if (preferences.subject !== undefined) setSubject(preferences.subject)
     if (preferences.contestStatus !== undefined) setContestStatus(preferences.contestStatus)
   }, [route.page])
+
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = settings.colorTheme
+  }, [settings.colorTheme])
 
   function handleSaveSettings(nextSettings: AppSettings) {
     saveSettings(nextSettings)

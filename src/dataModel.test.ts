@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import { normalizeProblemData } from "./dataModel.ts"
-import { loadProblemData } from "./storage.ts"
+import { loadProblemData, loadSettings, saveSettings } from "./storage.ts"
 
 function memoryStorage(): Storage {
   const values = new Map<string, string>()
@@ -115,4 +115,19 @@ test("malformed storage is not overwritten", () => {
   assert.equal(loaded.canPersist, false)
   assert.equal(storage.getItem("problems"), "not-json")
   assert.equal(storage.getItem("problems-backup-before-attempt-number-v1"), null)
+})
+
+test("the preferred color theme persists with a safe cream fallback", () => {
+  const storage = memoryStorage()
+  Object.defineProperty(globalThis, "localStorage", { value: storage, configurable: true })
+  saveSettings({
+    defaultSubject: "geometry",
+    defaultRating: 1750,
+    defaultContestStatus: "rated",
+    colorTheme: "sage",
+  })
+  assert.equal(loadSettings().colorTheme, "sage")
+
+  storage.setItem("settings", JSON.stringify({ colorTheme: "ultraviolet" }))
+  assert.equal(loadSettings().colorTheme, "cream")
 })

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { contestStatusOptions, subjectOptions } from "./types.ts"
 import type { AppSettings } from "./storage.ts"
-import { DEFAULT_APP_SETTINGS } from "./storage.ts"
+import { colorThemeOptions, DEFAULT_APP_SETTINGS } from "./storage.ts"
 
 interface SettingsProps {
   settings: AppSettings
@@ -12,6 +12,7 @@ function Settings({ settings, onSave }: SettingsProps) {
   const [defaultSubject, setDefaultSubject] = useState(settings.defaultSubject)
   const [defaultRating, setDefaultRating] = useState(settings.defaultRating)
   const [defaultContestStatus, setDefaultContestStatus] = useState(settings.defaultContestStatus)
+  const [colorTheme, setColorTheme] = useState(settings.colorTheme)
   const [saved, setSaved] = useState(false)
 
   function restoreDefaults() {
@@ -19,6 +20,7 @@ function Settings({ settings, onSave }: SettingsProps) {
     setDefaultSubject(DEFAULT_APP_SETTINGS.defaultSubject)
     setDefaultRating(DEFAULT_APP_SETTINGS.defaultRating)
     setDefaultContestStatus(DEFAULT_APP_SETTINGS.defaultContestStatus)
+    setColorTheme(DEFAULT_APP_SETTINGS.colorTheme)
     setSaved(false)
   }
 
@@ -27,6 +29,7 @@ function Settings({ settings, onSave }: SettingsProps) {
       defaultSubject,
       defaultRating,
       defaultContestStatus,
+      colorTheme,
     })
     setSaved(true)
   }
@@ -42,6 +45,33 @@ function Settings({ settings, onSave }: SettingsProps) {
         </div>
 
         <div className="settings-grid">
+          <fieldset className="theme-picker wide-field">
+            <legend className="input-description">color theme</legend>
+            <div className="theme-options">
+              {colorThemeOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className={`theme-option theme-option-${option.value} ${colorTheme === option.value ? "selected" : ""}`}
+                >
+                  <input
+                    className="visually-hidden"
+                    type="radio"
+                    name="color-theme"
+                    value={option.value}
+                    checked={colorTheme === option.value}
+                    onChange={() => {
+                      setColorTheme(option.value)
+                      setSaved(false)
+                    }}
+                  />
+                  <span className="theme-swatch" aria-hidden="true"><i /><i /><i /></span>
+                  <strong>{option.label}</strong>
+                  {option.value === "pro" && <small>Black &amp; white only</small>}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
           <label className="input-field">
             <span className="input-description">default subject</span>
             <select
