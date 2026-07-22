@@ -90,7 +90,9 @@ function AttemptDetailContent({
     }
     if (!draftAttempt.date) nextInvalidFields.add("edit-attempt-date")
     if (!draftAttempt.result) nextInvalidFields.add("edit-attempt-result")
-    if (!draftAttempt.contestStatus) nextInvalidFields.add("edit-attempt-contest-status")
+    if (!draftAttempt.isReview && !draftAttempt.contestStatus) {
+      nextInvalidFields.add("edit-attempt-contest-status")
+    }
     if (!Number.isFinite(draftAttempt.timeSpent) || draftAttempt.timeSpent < 1) {
       nextInvalidFields.add("edit-attempt-time")
     }
@@ -271,21 +273,23 @@ function AttemptDetailContent({
                   </select>
                 </label>
               )}
-              <label className="input-field">
-                <span className="input-description">contest rated or unrated?</span>
-                <select
-                  className={`input-card ${invalidFields.has("edit-attempt-contest-status") ? "input-error" : ""}`}
-                  aria-invalid={invalidFields.has("edit-attempt-contest-status")}
-                  value={draftAttempt.contestStatus} onChange={(event) => {
-                  setDraftAttempt({ ...draftAttempt, contestStatus: event.target.value })
-                  clearInvalidField("edit-attempt-contest-status")
-                }}>
-                  <option value="" disabled>Select rated or unrated</option>
-                  {contestStatusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
+              {!attempt.isReview && (
+                <label className="input-field">
+                  <span className="input-description">contest rated or unrated?</span>
+                  <select
+                    className={`input-card ${invalidFields.has("edit-attempt-contest-status") ? "input-error" : ""}`}
+                    aria-invalid={invalidFields.has("edit-attempt-contest-status")}
+                    value={draftAttempt.contestStatus} onChange={(event) => {
+                    setDraftAttempt({ ...draftAttempt, contestStatus: event.target.value })
+                    clearInvalidField("edit-attempt-contest-status")
+                  }}>
+                    <option value="" disabled>Select rated or unrated</option>
+                    {contestStatusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
               {!attempt.isReview && (
                 <>
                   <label className="input-field wide-field">
@@ -336,30 +340,36 @@ function AttemptDetailContent({
                   <dt>Time spent</dt>
                   <dd>{formatDuration(attempt.timeSpent)}</dd>
                 </div>
-                <div className="detail-item">
-                  <dt>Mistake type</dt>
-                  <dd>{optionLabel(mistakeTypeOptions, attempt.mistakeType, "None recorded")}</dd>
-                </div>
-                <div className="detail-item">
-                  <dt>Contest status</dt>
-                  <dd>{optionLabel(contestStatusOptions, attempt.contestStatus)}</dd>
-                </div>
+                {!attempt.isReview && (
+                  <>
+                    <div className="detail-item">
+                      <dt>Mistake type</dt>
+                      <dd>{optionLabel(mistakeTypeOptions, attempt.mistakeType, "None recorded")}</dd>
+                    </div>
+                    <div className="detail-item">
+                      <dt>Contest status</dt>
+                      <dd>{optionLabel(contestStatusOptions, attempt.contestStatus)}</dd>
+                    </div>
+                  </>
+                )}
               </dl>
             </section>
 
-            <section className="detail-section" aria-labelledby="reflection-heading">
-              <h2 id="reflection-heading">Learning</h2>
-              <dl className="detail-grid">
-                <div className="detail-item wide-field">
-                  <dt>What I learned</dt>
-                  <dd>{attempt.keyIdea || "Not recorded"}</dd>
-                </div>
-                <div className="detail-item wide-field">
-                  <dt>Recognition clue</dt>
-                  <dd>{attempt.recognitionClue || "Not recorded"}</dd>
-                </div>
-              </dl>
-            </section>
+            {!attempt.isReview && (
+              <section className="detail-section" aria-labelledby="reflection-heading">
+                <h2 id="reflection-heading">Learning</h2>
+                <dl className="detail-grid">
+                  <div className="detail-item wide-field">
+                    <dt>What I learned</dt>
+                    <dd>{attempt.keyIdea || "Not recorded"}</dd>
+                  </div>
+                  <div className="detail-item wide-field">
+                    <dt>Recognition clue</dt>
+                    <dd>{attempt.recognitionClue || "Not recorded"}</dd>
+                  </div>
+                </dl>
+              </section>
+            )}
           </article>
 
           <div className="review-action">
