@@ -9,6 +9,7 @@ import {
   localDateKey,
   problemIdentityKey,
 } from "./storage.ts"
+import SliderInput from "./SliderInput"
 
 interface ProblemDetailProps {
   problemId: string
@@ -104,13 +105,15 @@ function ProblemDetail({
     return (
       <>
         <h1 id="page-title">Edit problem</h1>
-        <section className="dashboard-card log-panel problem-edit-panel">
+        <section className="dashboard-card log-panel log-edit-panel">
           <h2 className="section-header">Problem details</h2>
-          <div className="form-section log-panel-fields edit-log-fields">
+          <div className="form-section log-panel-fields">
             <label className="input-field">
               <span className="input-description">problem year</span>
               <input
                 className={`input-card ${invalidFields.has("edit-problem-year") || identityError ? "input-error" : ""}`}
+                aria-invalid={invalidFields.has("edit-problem-year") || identityError}
+                placeholder="2024"
                 value={draftProblem.year}
                 onChange={(event) => {
                   setDraftProblem({ ...draftProblem, year: event.target.value })
@@ -123,7 +126,10 @@ function ProblemDetail({
               <span className="input-description">contest</span>
               <input
                 className={`input-card ${invalidFields.has("edit-problem-contest") || identityError ? "input-error" : ""}`}
+                aria-invalid={invalidFields.has("edit-problem-contest") || identityError}
+                placeholder="AMC10"
                 value={draftProblem.contest}
+                autoCapitalize="characters"
                 onChange={(event) => {
                   setDraftProblem({ ...draftProblem, contest: event.target.value.toUpperCase() })
                   clearInvalidField("edit-problem-contest")
@@ -135,6 +141,8 @@ function ProblemDetail({
               <span className="input-description">subcontest (optional)</span>
               <input
                 className={`input-card ${identityError ? "input-error" : ""}`}
+                aria-invalid={identityError}
+                placeholder="A"
                 value={draftProblem.subcontest}
                 onChange={(event) => {
                   setDraftProblem({ ...draftProblem, subcontest: event.target.value })
@@ -146,6 +154,8 @@ function ProblemDetail({
               <span className="input-description">problem number</span>
               <input
                 className={`input-card ${invalidFields.has("edit-problem-number") || identityError ? "input-error" : ""}`}
+                aria-invalid={invalidFields.has("edit-problem-number") || identityError}
+                placeholder="17"
                 value={draftProblem.problemNumber}
                 onChange={(event) => {
                   setDraftProblem({ ...draftProblem, problemNumber: event.target.value })
@@ -154,16 +164,23 @@ function ProblemDetail({
                 }}
               />
             </label>
-            <label className="input-field wide-field">
+            <label className="input-field">
               <span className="input-description">url</span>
-              <input className="input-card" type="url" value={draftProblem.url} onChange={(event) => {
-                setDraftProblem({ ...draftProblem, url: event.target.value })
-              }} />
+              <input
+                className="input-card"
+                type="url"
+                placeholder="https://..."
+                value={draftProblem.url}
+                onChange={(event) => {
+                  setDraftProblem({ ...draftProblem, url: event.target.value })
+                }}
+              />
             </label>
             <label className="input-field">
               <span className="input-description">subject</span>
               <select
                 className={`input-card ${invalidFields.has("edit-problem-subject") ? "input-error" : ""}`}
+                aria-invalid={invalidFields.has("edit-problem-subject")}
                 value={draftProblem.subject}
                 onChange={(event) => {
                   setDraftProblem({ ...draftProblem, subject: event.target.value })
@@ -176,21 +193,17 @@ function ProblemDetail({
                 ))}
               </select>
             </label>
-            <label className="input-field">
-              <span className="input-description">rating</span>
-              <input
-                className={`input-card ${invalidFields.has("edit-problem-rating") ? "input-error" : ""}`}
-                type="number"
-                min="1500"
-                max="2000"
-                step="50"
-                value={draftProblem.rating}
-                onChange={(event) => {
-                  setDraftProblem({ ...draftProblem, rating: Number(event.target.value) })
-                  clearInvalidField("edit-problem-rating")
-                }}
-              />
-            </label>
+            <SliderInput
+              label="rating"
+              value={draftProblem.rating}
+              min={1500}
+              max={2000}
+              step={50}
+              onChange={(rating) => {
+                setDraftProblem({ ...draftProblem, rating })
+                clearInvalidField("edit-problem-rating")
+              }}
+            />
           </div>
         </section>
         {error && <p className="form-error" role="alert">{error}</p>}

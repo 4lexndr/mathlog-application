@@ -88,7 +88,7 @@ function AttemptDetail({ attemptId, problems, attempts, onUpdate, onDelete }: At
     return (
       <>
         <h1 id="page-title">Edit attempt #{attempt.attemptNumber}</h1>
-        <section className="dashboard-card log-panel attempt-edit-panel">
+        <section className="dashboard-card log-panel log-edit-panel">
           <h2 className="section-header">Attempt details</h2>
           <div className="form-section log-panel-fields">
             <label className="input-field">

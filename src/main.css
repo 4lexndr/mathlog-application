@@ -944,7 +944,7 @@ button {
 
 .log-type-option.selected {
   border-color: var(--accent);
-  color: var(--button-text);
+  color: var(--heading);
   background: var(--accent-softer);
   box-shadow: 0 4px 14px var(--shadow);
 }
@@ -1672,12 +1672,8 @@ textarea.input-card {
   font-size: 13px;
 }
 
-.attempt-edit-panel,
-.problem-edit-panel {
+.log-edit-panel {
   min-height: 0;
-}
-
-.attempt-edit-panel {
   width: min(100%, 549px);
   margin: 0 auto;
 }
