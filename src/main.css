@@ -1675,7 +1675,7 @@ textarea.input-card {
 .log-edit-panel {
   min-height: 0;
   width: min(100%, 549px);
-  margin: 0 auto;
+  margin: 0;
 }
 
 .contest-history-empty {
